@@ -4,12 +4,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\Registered;
 use App\Models\User;
 use Exception;
 use Illuminate\Http\Request;
 
 use Firebase\JWT\JWT;
-
+use Illuminate\Support\Facades\Mail;
 
 class AuthController extends Controller
 {
@@ -40,11 +41,13 @@ class AuthController extends Controller
             $user -> password = app('hash') -> make($request->input('password'));
 
             if ($user -> save()) {
+                //send confirmation email
+                Mail::to($request -> input('email')) -> send(new Registered());
                 return response() -> json(['status' => 'success', 'message' => 'User Created Successfully!', 'user' => $user]);
             }
 
         } catch (Exception $e) {
-            return response() -> json(['status' => 'success', 'message' => 'User Registered']);
+            return response() -> json(['status' => 'failure', 'message' => $e -> getMessage()]);
         }
     }
 

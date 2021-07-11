@@ -21,15 +21,15 @@ $router->get('/', function () use ($router) {
 
 $router->post('/user', 'AuthController@genjwt');
 $router->get('/allUsers', 'AuthController@getUsers');
-$router->post('/register', 'AuthController@registerUser');
+$router->post('/register/verify', 'AuthController@registerUser');
+$router->get('/verifyEmail', ['as' => 'verification', 'uses' => 'AuthController@verifyEmail']);
+$router->get('/register/signup', 'AuthController@signup');
+$router->post('/login', 'AuthController@login');
+$router->get('/test/{token}', 'AuthController@test');
 
 $router->group(['prefix' => 'api', 'middleware' => 'auth'],  function () use ($router) {
     $router->get('/posts', 'PostController@index');
     $router->post('/posts', 'PostController@store'); 
     $router->put('/posts/{id}', 'PostController@update');
     $router->delete('/posts/{id}', 'PostController@destroy');
-    $router->post('/login', function (User $user) {
-        print_r($user);
-        return response() -> json(['status' => 'success', 'user' => $user['name']]);
-    });
 });

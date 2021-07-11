@@ -5,6 +5,7 @@
 namespace App\Http\Controllers;
 
 use App\Mail\Registered;
+use App\Mail\EmailVerification;
 use App\Models\User;
 use Exception;
 use Illuminate\Http\Request;
@@ -21,82 +22,144 @@ class AuthController extends Controller
         $this->priv_key = file_get_contents(dirname(dirname(__FILE__)).'../../../key.pem');
         $this->pub_key = file_get_contents(dirname(dirname(__FILE__)).'../../../public.pem');
     }
-
+    
     public function getUsers() {
         return User::all();
+    }
+
+    public function verifyEmail(Request $request) {
+        $this -> validate($request, [
+            'token' => 'required|string',
+        ]);
+
+        $token = $request -> token;
+
+        $payload = $this -> decodejwt($token);
+
+        if (gettype($payload) == 'array') {
+            return redirect('http://localhost:8000/register/signup/?token='.$token);
+        } else {
+            return response() -> json(['status' => 'failure', 'message' => 'Token expired']);
+        }
+    }
+
+    public function signup(Request $request) {
+        $this -> validate($request, [
+            'token' => 'required|string',
+        ]);
+        $token = $request -> token;
+        
+        // $this -> validate($request, [
+        //     'password' => 'required|string',
+        // ]);
+        
+        $payload = $this -> decodejwt($token);
+
+        try {
+            if (gettype($payload) === "array") {
+                $user = new User();
+                $user -> username = $payload['iss'];
+                $user -> email = $payload['sub'];
+                $user -> role = 'normal';
+                // $user -> password = app('hash') -> make($request->password);
+                $user -> password = app('hash') -> make('123456');
+
+                if ($user -> save()) {
+                    return response() -> json(['status' => 'success', 'message' => 'Registered Successfully']);
+                }
+            } else {
+                return response() -> json(['status' => 'failure', 'message' => 'token expired']);
+            }
+            
+        } catch (\Exception $e) {
+            return response() -> json(['status' => 'failure', 'message' => $e -> getMessage()]);
+        }
+    }
+
+    public function login(Request $request) {
+        $this -> validate($request, [
+            'email' => 'required|email',
+            'password' => 'required|string',
+        ]);
+
+        
+        try {
+            // $hashedPass = app('hash') -> make($request -> password);
+            $user = User::where('email', $request -> email) -> first();
+
+            if ($user && app('hash') -> check($request->password, $user['password'])) {
+                $nowTime = time();
+                $payload = array(
+                    'sub' => $request -> email,
+                    'pass' => $request -> password,
+                    'iat' => $nowTime,
+                    'exp' => $nowTime + (60*2),
+                );
+                $jwt = JWT::encode($payload, $this->priv_key, 'RS256');
+                
+                return response() -> json(['status' => 'success', 'message' => $jwt]);
+            } else {
+                return response() -> json(['status' => 'failure', 'message' => 'Invalid credentials']);
+            }
+            
+        } catch (\Exception $e) {
+            return response() -> json(['status' => 'error', 'message' => $e -> getMessage()]);
+        }
+
     }
 
     public function registerUser(Request $request) {
         $this->validate($request, [
             'username' => 'required|string',
             'email' => 'required|email|unique:users',
-            'password' => 'required|string',
         ]);
 
         try {
-            $user = new User();
-            $user -> username = $request->input('username');
-            $user -> email = $request->input('email');
-            $user -> role = 'normal';
-            $user -> password = app('hash') -> make($request->input('password'));
 
-            if ($user -> save()) {
-                //send confirmation email
-                Mail::to($request -> input('email')) -> send(new Registered());
-                return response() -> json(['status' => 'success', 'message' => 'User Created Successfully!', 'user' => $user]);
-            }
+            $nowSeconds = time();
+            $payload = array(
+                'iss' => $request -> username,
+                'sub' => $request -> email,
+                'iat' => $nowSeconds,
+                'exp' => $nowSeconds + (60*5),
+            );
+
+            $newjwt = $this -> genjwt($payload);
+            $url = "http://localhost:8000/verifyEmail/?token=". $newjwt;
+            Mail::to($request -> input('email')) -> send(new EmailVerification($url));
 
         } catch (Exception $e) {
             return response() -> json(['status' => 'failure', 'message' => $e -> getMessage()]);
         }
     }
 
-    public function genjwt(Request $request) {
-
-        $this -> validate($request, [
-            'email' => 'required|email',
-            'password' => 'required|string'
-        ]);
-
-        $payload = array(
-            'sub'=> $request -> email,
-            'pass' => $request -> password,
-            'iat' => time(),
-        );
+    public function genjwt(Array $payload) {
         
-        try {
-            $jwt = JWT::encode($payload, $this->priv_key, 'RS256');
-            print_r($jwt);
-            // echo "Encode:\n" . print_r($jwt, true) . "\n";
-            
-            // echo "Decode:\n" . print_r($decoded_array, true) . "\n";
-            
-            return response() -> json(['status' => 'success', 'message' => 'done dana done done']);
-            
-        } catch (\Exception $e) {
-            return response() -> json(['status' => 'error', 'message' => $e -> getMessage()]);
+        if (!empty($payload)) {
+            try {
+                $jwt = JWT::encode($payload, $this->priv_key, 'RS256');
+                
+                return $jwt;
+                
+            } catch (\Exception $e) {
+                return response() -> json(['status' => 'error', 'message' => $e -> getMessage()]);
+            }
         }
         
     }
     
-    public function decodejwt(Request $request) {
-        $jwt = $request -> header('token');
-        
-        try {
-            $decoded = JWT::decode($jwt, $this -> pub_key, array('RS256'));
-            
-            /*
-            NOTE: This will now be an object instead of an associative array. To get
-            an associative array, you will need to cast it as such:
-            */
-            
-            $decoded_array = (array) $decoded;
-            print_r($decoded_array);
-            
-            return User::where('email', $decoded_array['sub'])-> first();
-            
-        } catch (\Exception $e) {
-            return response() -> json(['status' => 'error', 'message' => $e -> getMessage()]);
+    public function decodejwt(String $jwt) {
+        if (!empty($jwt)) {
+            try {
+                $decoded = JWT::decode($jwt, $this -> pub_key, array('RS256'));
+                
+                $decoded_array = (array) $decoded;
+                
+                return $decoded_array;
+                
+            } catch (\Exception $e) {
+                return $e -> getMessage();
+            }
         }
     }
 }

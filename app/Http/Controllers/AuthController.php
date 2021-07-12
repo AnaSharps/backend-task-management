@@ -46,13 +46,16 @@ class AuthController extends Controller
     public function signup(Request $request) {
         $this -> validate($request, [
             'token' => 'required|string',
+            'password' => 'required|string'
         ]);
+
+        // Check for password strength
+        $validPassword = $this -> checkPassword($request -> password);
+        if ($validPassword !== 'Success') {
+            return response() -> json(['status' => 'failure', 'message' => $validPassword]);
+        }
+
         $token = $request -> token;
-        
-        // $this -> validate($request, [
-        //     'password' => 'required|string',
-        // ]);
-        
         $payload = $this -> decodejwt($token);
 
         try {
@@ -61,8 +64,8 @@ class AuthController extends Controller
                 $user -> username = $payload['iss'];
                 $user -> email = $payload['sub'];
                 $user -> role = 'normal';
-                // $user -> password = app('hash') -> make($request->password);
-                $user -> password = app('hash') -> make('123456');
+                $user -> password = app('hash') -> make($request->password);
+                // $user -> password = app('hash') -> make('123456');
 
                 if ($user -> save()) {
                     return response() -> json(['status' => 'success', 'message' => 'Registered Successfully']);
@@ -161,5 +164,22 @@ class AuthController extends Controller
                 return $e -> getMessage();
             }
         }
+    }
+
+    public function checkPassword($pwd) {
+    
+        if (strlen($pwd) < 8) {
+            return 'Password must be atleast 8 characters long!';
+        } else if (!preg_match("#[0-9]+#", $pwd)) {
+            return 'Password must include at least one digit!';
+        } else if (!preg_match("#[a-z]+#", $pwd)) {
+            return 'Password must include at least one lowercase letter!';
+        } else if (!preg_match("#[A-Z]+#", $pwd)) {
+            return 'Password must include at least one uppercase letter!';
+        } else if (!preg_match("#[!@\#$%^&*]+#", $pwd)) {
+            return 'Password must include at least one special character!';
+        }
+
+        return 'Success';
     }
 }

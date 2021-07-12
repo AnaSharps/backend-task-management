@@ -53,9 +53,7 @@ class AuthServiceProvider extends ServiceProvider
                 $user = User::where('email', $decoded_array['sub']) -> first();
                 if (app('hash')->check($decoded_array['pass'], $user -> password)) {
                     return $user;
-                }
-                
-                // return User::where([['email', $decoded_array['sub']], ['password', app('hash') -> make($decoded_array['pass'])]])-> first();
+                }                
             }
         });
     }

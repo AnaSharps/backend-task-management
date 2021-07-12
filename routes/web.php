@@ -23,7 +23,7 @@ $router->post('/user', 'AuthController@genjwt');
 $router->get('/allUsers', 'AuthController@getUsers');
 $router->post('/register/verify', 'AuthController@registerUser');
 $router->get('/verifyEmail', ['as' => 'verification', 'uses' => 'AuthController@verifyEmail']);
-$router->get('/register/signup', 'AuthController@signup');
+$router->post('/register/signup', 'AuthController@signup');
 $router->post('/login', 'AuthController@login');
 $router->get('/test/{token}', 'AuthController@test');
 

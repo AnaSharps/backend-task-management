@@ -25,11 +25,13 @@ $router->post('/register', 'AuthController@registerSelf');
 $router->get('/verifyEmail', ['as' => 'verification', 'uses' => 'AuthController@verifyEmail']);
 $router->post('/register/signup', 'AuthController@signup');
 $router->post('/login', 'AuthController@login');
-$router->get('/test/{token}', 'AuthController@test');
 
 $router->group(['prefix' => 'api', 'middleware' => 'auth'],  function () use ($router) {
     $router->get('/posts', 'PostController@index');
     $router->post('/posts', 'PostController@store'); 
     $router->put('/posts/{id}', 'PostController@update');
     $router->delete('/posts/{id}', 'PostController@destroy');
+    $router->get('/forgotPass', 'AuthController@forgotPass');
+    $router->post('/resetPass', 'AuthController@resetPass');
+    $router->delete('deleteSelf', 'AuthController@deRegister');
 });

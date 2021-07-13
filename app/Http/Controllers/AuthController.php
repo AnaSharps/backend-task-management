@@ -18,81 +18,65 @@ use Illuminate\Support\Facades\Mail;
 
 class AuthController extends Controller
 {
-    private $priv_key;
-    private $pub_key;
+    private $key;
     public $passPattern;
-    
-    public function __construct(){
-        $this->priv_key = file_get_contents(dirname(dirname(__FILE__)).'../../../key.pem');
-        $this->pub_key = file_get_contents(dirname(dirname(__FILE__)).'../../../public.pem');
+
+    public function __construct()
+    {
+        $this->key = env("KEY_JWT");
         $this->passPattern = "/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[.,!@#$%^&]).+$/";
     }
 
-    public function genjwt(Array $payload) {
-        
+    public function genjwt(array $payload)
+    {
         if (!empty($payload)) {
             try {
-                $jwt = JWT::encode($payload, $this->priv_key, 'RS256');
-                
+                $jwt = JWT::encode($payload, $this->key);
+
                 return $jwt;
-                
             } catch (\Exception $e) {
-                return response() -> json(['status' => 'error', 'message' => $e -> getMessage()]);
+                return response()->json(['status' => 'error', 'message' => $e->getMessage()]);
             }
         }
-        
     }
-    
-    public function decodejwt(String $jwt) {
+
+    public function decodejwt(String $jwt)
+    {
         if (!empty($jwt)) {
             try {
-                $decoded = JWT::decode($jwt, $this -> pub_key, array('RS256'));
-                
+                $decoded = JWT::decode($jwt, $this->key, array('HS256'));
+
                 $decoded_array = (array) $decoded;
-                
+
                 return $decoded_array;
-                
             } catch (\Exception $e) {
-                return $e -> getMessage();
+                return $e->getMessage();
             }
         }
     }
 
-    // public function checkPassword($pwd) {
-    
-    //     if (strlen($pwd) < 8) {
-    //         return 'Password must be atleast 8 characters long!';
-    //     } else if (!preg_match("#[0-9]+#", $pwd)) {
-    //         return 'Password must include at least one digit!';
-    //     } else if (!preg_match("#[a-z]+#", $pwd)) {
-    //         return 'Password must include at least one lowercase letter!';
-    //     } else if (!preg_match("#[A-Z]+#", $pwd)) {
-    //         return 'Password must include at least one uppercase letter!';
-    //     } else if (!preg_match("#[!@\#$%^&*]+#", $pwd)) {
-    //         return 'Password must include at least one special character!';
-    //     }
-
-    //     return 'Success';
-    // }
- 
-    public function getUsers() {
+    public function getUsers()
+    { //pagination
         return User::all();
     }
 
-    public function verifyEmail(Request $request) {
-        $this -> validate($request, [
+    public function verifyEmail(Request $request)
+    {
+        $this->validate($request, [
             'token' => 'required|string',
         ]);
 
-        $token = $request -> token;
+        $token = $request->token;
 
-        return redirect('http://localhost:8000/register/signup/?token='.$token);
+        return redirect('http://localhost:8000/register/signup/?token=' . $token);
     }
 
-    public function signup(Request $request) {
-        $this -> validate($request, [
+    public function signup(Request $request)
+    {
+        $this->validate($request, [
             'token' => 'required|string',
-            'password' => 'required|string|min:8|regex: '. $this -> passPattern,
+            'username' => 'required|string',
+            'password' => 'required|string|min:8|regex: ' . $this->passPattern,
         ]);
 
         // Check for password strength
@@ -101,186 +85,157 @@ class AuthController extends Controller
         //     return response() -> json(['status' => 'failure', 'message' => $validPassword]);
         // }
 
-        $token = $request -> token;
-        $payload = $this -> decodejwt($token);
+        $token = $request->token;
+        $payload = $this->decodejwt($token);
 
-        try {
-            if (gettype($payload) === "array") {
-                $user = new User();
-                $email = $payload['sub'];
-                $user -> Name = strtoupper($payload['iss']);
-                $user -> Email = strtoupper($email);
-                $user -> Role = strtoupper('Normal');
-                $user -> Created_by = strtoupper($payload['createdBy']);
-                $user -> Password = app('hash') -> make($request->password);
+        if (gettype($payload) === "array") {
+            $user = new User();
+            $email = $payload['sub'];
+            $user->Name = strtoupper($request->username);
+            $user->Email = strtoupper($email);
+            $user->Role = strtoupper('Normal');
+            $user->Created_by = strtoupper($payload['createdBy']);
+            $user->Password = app('hash')->make($request->password);
 
-                if ($user -> save()) {
-                    Mail::to($email) -> send(new Registered());
-                    return response() -> json(['status' => 'success', 'message' => 'Registered Successfully']);
-                }
-            } else {
-                return response() -> json(['status' => 'failure', 'message' => 'token expired']);
+            if ($user->save()) {
+                Mail::to($email)->send(new Registered());
+                return response()->json(['status' => 'success', 'message' => 'Registered Successfully']);
             }
-            
-        } catch (\Exception $e) {
-            return response() -> json(['status' => 'failure', 'message' => $e -> getMessage()]);
+        } else {
+            return response()->json(['status' => 'failure', 'message' => 'token expired']);
         }
     }
 
-    public function login(Request $request) {
-        $this -> validate($request, [
+    public function login(Request $request)
+    {
+        $this->validate($request, [
             'email' => 'required|email',
             'password' => 'required|string',
         ]);
 
-        
-        try {
-            $user = User::where('Email', strtoupper($request -> email)) -> first();
 
-            if ($user && app('hash') -> check($request->password, $user['Password'])) {
-                $nowTime = time();
-                $payload = array(
-                    'iss' => $user -> Name,
-                    'sub' => $user -> Email,
-                    'createdBy' => $user -> Created_by,
-                    'role' => $user -> Role,
-                    'iat' => $nowTime,
-                    'exp' => $nowTime + (60*60),
-                );
-                $jwt = JWT::encode($payload, $this->priv_key, 'RS256');
-                
-                return response() -> json(['status' => 'success', 'message' => 'Successfully Logged in!', 'token' => $jwt]);
-            } else {
-                return response() -> json(['status' => 'failure', 'message' => 'Invalid credentials']);
-            }
-            
-        } catch (\Exception $e) {
-            return response() -> json(['status' => 'error', 'message' => $e -> getMessage()]);
-        }
+        $user = User::where('Email', strtoupper($request->email))->first();
 
-    }
-    
-    private function register(String $username, String $email, String $createdBy) {
-        try {
-            $nowSeconds = time();
+        if ($user && app('hash')->check($request->password, $user['Password'])) {
+            $nowTime = time();
             $payload = array(
-                'iss' => $username,
-                'sub' => $email,
-                'createdBy' => $createdBy,
-                'iat' => $nowSeconds,
-                'exp' => $nowSeconds + (60*5),
+                'iss' => $user->Name,
+                'sub' => $user->Email,
+                'createdBy' => $user->Created_by,
+                'role' => $user->Role,
+                'iat' => $nowTime,
+                'exp' => $nowTime + (60 * 60),
             );
-        
-            $newjwt = $this -> genjwt($payload);
-            $url = "http://localhost:8000/verifyEmail/?token=". $newjwt;
-            Mail::to($email) -> send(new EmailVerification($url));
-            
-        } catch (Exception $e) {
-            return response() -> json(['status' => 'failure', 'message' => $e -> getMessage()]);
+            $jwt = $this->genjwt($payload);
+
+            return response()->json(['status' => 'success', 'message' => 'Successfully Logged in!', 'token' => $jwt]);
+        } else {
+            return response()->json(['status' => 'failure', 'message' => 'Invalid credentials']);
         }
-
-        
     }
 
-    public function registerSelf(Request $request) {
+    private function register(String $email, String $createdBy)
+    {
+        $nowSeconds = time();
+        $payload = array(
+            'sub' => $email,
+            'createdBy' => $createdBy,
+            'iat' => $nowSeconds,
+            'exp' => $nowSeconds + (60 * 5),
+        );
+
+        $newjwt = $this->genjwt($payload);
+        $url = "http://localhost:8000/verifyEmail/?token=" . $newjwt;
+        Mail::to($email)->send(new EmailVerification($url));
+    }
+
+    public function registerSelf(Request $request)
+    {
         $this->validate($request, [
-            'username' => 'required|string',
             'email' => 'required|email|unique:users',
         ]);
 
-        $username = $request -> username;
-        $email = $request -> email;
-        $createdBy = $request -> email;
+        $email = $request->email;
+        $createdBy = $request->email;
 
-        return $this -> register($username, $email, $createdBy);
+        return $this->register($email, $createdBy);
     }
 
-    public function addUser(Request $request) {
+    public function addUser(Request $request)
+    {
         //after admin validation through provider
-        $this -> validate($request, [
-            'username' => 'required|string',
+        $this->validate($request, [
             'email' => 'required|email|unique:users',
         ]);
-        $token = $request -> bearerToken('token');
-        $payload = $this ->decodejwt($token);
+        $token = $request->bearerToken('token');
+        $payload = $this->decodejwt($token);
 
-        $username = $request -> username;
-        $email = $request -> email;
+        $email = $request->email;
         $createdBy = $payload['sub'];
 
-        return $this -> register($username, $email, $createdBy);
+        return $this->register($email, $createdBy);
     }
 
-    public function forgotPass(Request $request) {
-        if ($request -> bearerToken('token')) {
-            $token = $request -> bearerToken('token');
+    public function forgotPass(Request $request)
+    {
+        if ($request->bearerToken('token')) {
+            $token = $request->bearerToken('token');
 
-            $payload = $this -> decodejwt($token);
-            $user = User::where('Email', $payload['sub']) -> first();
+            $payload = $this->decodejwt($token);
+            $user = User::where('Email', $payload['sub'])->first();
 
             if ($user) {
                 $nowSeconds = time();
                 $payload['iat'] = $nowSeconds;
-                $payload['exp'] = $nowSeconds + (60*5);
+                $payload['exp'] = $nowSeconds + (60 * 5);
 
-                $newjwt = $this -> genjwt($payload);
-                $url = "http://localhost:8000/api/resetPass/?token=". $newjwt;
-                $email = strtolower($user -> Email);
-                Mail::to($email) -> send(new ResetPassword($url));
-
+                $newjwt = $this->genjwt($payload);
+                $url = "http://localhost:8000/api/resetPass/?token=" . $newjwt;
+                $email = strtolower($user->Email);
+                Mail::to($email)->send(new ResetPassword($url));
             }
         } else {
-
         }
     }
 
-    public function resetPass(Request $request) {
-        $this -> validate($request, [
+    public function resetPass(Request $request)
+    {
+        $this->validate($request, [
             'token' => 'required|string',
-            'password' => 'required|string|min:8|regex: '. $this -> passPattern,
+            'password' => 'required|string|min:8|regex: ' . $this->passPattern,
         ]);
 
-        $token = $request -> token;
-        $payload = $this -> decodejwt($token);
-        
-        try {
-            if (gettype($payload) === "array") {
-                $email = $payload['sub'];
-                $user = User::where('Email', $email) -> first();
-                $user -> Password = app('hash') -> make($request->password);
-    
-                if ($user -> save()) {
-                    $email = strtolower($email);
-                    Mail::to($email) -> send(new PasswordChanged());
-                    return response() -> json(['status' => 'success', 'message' => 'Successfully changed password!']);
-                }
-            } else {
-                return response() -> json(['status' => 'failure', 'message' => 'Token expired!']);
+        $token = $request->token;
+        $payload = $this->decodejwt($token);
+
+        if (gettype($payload) === "array") {
+            $email = $payload['sub'];
+            $user = User::where('Email', $email)->first();
+            $user->Password = app('hash')->make($request->password);
+
+            if ($user->save()) {
+                $email = strtolower($email);
+                Mail::to($email)->send(new PasswordChanged());
+                return response()->json(['status' => 'success', 'message' => 'Successfully changed password!']);
             }
-        } catch (\Exception $e) {
-            return response() -> json(['status' => 'failure', 'message' => $e -> getMessage()]);
+        } else {
+            return response()->json(['status' => 'failure', 'message' => 'Token expired!']);
         }
-
-
     }
 
-    public function deRegister(Request $request) {
-        if ($request -> bearerToken('token')) {
-            $token = $request -> bearerToken('token');
+    public function deRegister(Request $request)
+    {
+        if ($request->bearerToken('token')) {
+            $token = $request->bearerToken('token');
 
             $payload = $this->decodejwt($token);
             $email = $payload['sub'];
 
-            try {
-                $user = User::where('Email', $email) -> first();
-    
-                if ($user -> delete()) {
-                    return response() -> json(['status' => 'success', 'message' => 'Successfully dereggistered!']);
-                }
-            } catch (\Exception $e) {
-                return response() -> json(['status' => 'failure', 'message' => $e -> getMessage()]);
+            $user = User::where('Email', $email)->first();
+
+            if ($user->delete()) {
+                return response()->json(['status' => 'success', 'message' => 'Successfully dereggistered!']);
             }
         }
-    }
-
+    } //soft delete
 }

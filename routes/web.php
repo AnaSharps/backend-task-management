@@ -20,9 +20,9 @@ $router->get('/', function () use ($router) {
 });
 
 // $router->post('/user', 'AuthController@genjwt');
-$router->post('/register', 'AuthController@registerSelf');
+$router->post('/register', 'RegistrationController@registerSelf');
 $router->get('/verifyEmail', ['as' => 'verification', 'uses' => 'AuthController@verifyEmail']);
-$router->post('/register/signup', 'AuthController@signup');
+$router->post('/register/signup', 'RegistrationController@signup');
 $router->post('/login', 'AuthController@login');
 
 $router->group(['prefix' => 'api', 'middleware' => 'auth'],  function () use ($router) {

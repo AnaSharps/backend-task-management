@@ -143,6 +143,7 @@ class AuthController extends Controller
                     'iss' => $user -> Name,
                     'sub' => $user -> Email,
                     'createdBy' => $user -> Created_by,
+                    'role' => $user -> Role,
                     'iat' => $nowTime,
                     'exp' => $nowTime + (60*60),
                 );
@@ -255,7 +256,8 @@ class AuthController extends Controller
             $email = $payload['sub'];
 
             try {
-                $user = User::where('email', $email) -> first();
+                $email = strtolower($email);
+                $user = User::where('Email', $email) -> first();
     
                 if ($user -> delete()) {
                     return response() -> json(['status' => 'success', 'message' => 'Successfully dereggistered!']);

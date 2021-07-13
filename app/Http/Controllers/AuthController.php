@@ -107,14 +107,15 @@ class AuthController extends Controller
         try {
             if (gettype($payload) === "array") {
                 $user = new User();
+                $email = $payload['sub'];
                 $user -> Name = strtoupper($payload['iss']);
-                $user -> Email = strtoupper($payload['sub']);
+                $user -> Email = strtoupper($email);
                 $user -> Role = strtoupper('Normal');
                 $user -> Created_by = strtoupper($payload['createdBy']);
                 $user -> Password = app('hash') -> make($request->password);
 
                 if ($user -> save()) {
-                    Mail::to(strtolower($user -> email)) -> send(new Registered());
+                    Mail::to($email) -> send(new Registered());
                     return response() -> json(['status' => 'success', 'message' => 'Registered Successfully']);
                 }
             } else {
@@ -134,20 +135,20 @@ class AuthController extends Controller
 
         
         try {
-            // $hashedPass = app('hash') -> make($request -> password);
-            $user = User::where('email', $request -> email) -> first();
+            $user = User::where('Email', strtoupper($request -> email)) -> first();
 
-            if ($user && app('hash') -> check($request->password, $user['password'])) {
+            if ($user && app('hash') -> check($request->password, $user['Password'])) {
                 $nowTime = time();
                 $payload = array(
-                    'iss' => $user -> username,
-                    'sub' => $request -> email,
+                    'iss' => $user -> Name,
+                    'sub' => $user -> Email,
+                    'createdBy' => $user -> Created_by,
                     'iat' => $nowTime,
-                    'exp' => $nowTime + (60*2),
+                    'exp' => $nowTime + (60*60),
                 );
                 $jwt = JWT::encode($payload, $this->priv_key, 'RS256');
                 
-                return response() -> json(['status' => 'success', 'message' => $jwt]);
+                return response() -> json(['status' => 'success', 'message' => 'Successfully Logged in!', 'token' => $jwt]);
             } else {
                 return response() -> json(['status' => 'failure', 'message' => 'Invalid credentials']);
             }

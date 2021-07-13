@@ -13,41 +13,41 @@ class PasswordController extends AuthController
 
     public function forgotPass(Request $request)
     {
-        if ($request->bearerToken('token')) {
-            $token = $request->bearerToken('token');
+        $this->validate($request, [
+            'email' => 'required|email|max: 255|regex: ' . $this->emailPattern,
+        ]);
 
-            $payload = (new GenerateJWT)->decodejwt($token);
-            $user = User::where('Email', $payload['sub'])->first();
+        $email = $request->email;
+        $email = strtolower($email);
 
-            if ($user) {
-                $nowSeconds = time();
-                $payload['iat'] = $nowSeconds;
-                $payload['exp'] = $nowSeconds + (60 * 60);
+        $nowSeconds = time();
+        $payload = array([
+            'sub' => $email,
+            'iat' => $nowSeconds,
+            'exp' => $nowSeconds + (60 * 60),
+        ]);
 
-                $newjwt = (new GenerateJWT)->genjwt($payload);
-                $url = "http://localhost:8000/api/resetPass/?token=" . $newjwt;
-                $email = strtolower($user->Email);
-                Mail::to($email)->send(new Email($newjwt, "Reset Password", "emails.resetPass"));
-
-                return response()->json(['status' => 'success', 'message' => 'Successfully sent Reset Password link to your email address.', 'token' => $newjwt]);
-            }
-        } else {
+        $newjwt = (new GenerateJWT)->genjwt($payload);
+        if (User::where('Email', $email)->first()) {
+            Mail::to($email)->send(new Email($newjwt, "Reset Password", "emails.resetPass"));
         }
+
+        return response()->json(['status' => 'success', 'message' => 'If this email is registered, a reset password link has been sent to you.', 'token' => $newjwt]);
     }
+
 
     public function resetPass(Request $request)
     {
         $this->validate($request, [
-            'token' => 'required|string',
-            'password' => 'required|string|min:8|max: 255|max: 255|regex: ' . $this->passPattern,
+            'password' => 'required|string|min:8|max: 255|regex: ' . $this->passPattern,
         ]);
 
-        $token = $request->token;
+        $token = $request->bearerToken('token');
         $payload = (new GenerateJWT)->decodejwt($token);
 
-        if (gettype($payload) === "array") {
-            $email = $payload['sub'];
-            $user = User::where('Email', $email)->first();
+        $email = $payload['sub'];
+        $user = User::where('Email', $email)->first();
+        if ($user) {
             $user->Password = app('hash')->make($request->password);
 
             if ($user->save()) {
@@ -57,6 +57,30 @@ class PasswordController extends AuthController
             }
         } else {
             return response()->json(['status' => 'failure', 'message' => 'Token expired!']);
+        }
+    }
+
+    public function changePassword(Request $request)
+    {
+        $this->validate($request, [
+            'password' => 'required|string|min: 8|max: 255|regex: ' . $this->passPattern,
+            'newPassword' => 'required|string|min: 8|max: 255|regex: ' . $this->passPattern,
+        ]);
+        $token = $request->bearerToken('token');
+
+        $payload = (new GenerateJWT)->decodejwt($token);
+        $user = User::where('Email', $payload['sub'])->first();
+
+        if ($user && app('hash')->check($request->password, $user->Password)) {
+            $user->Password = app('hash')->make($request->newPassword);
+
+            $user->save();
+            $email = strtolower($user->Email);
+            Mail::to($email)->send(new Email("", "Password Changed", "emails.passChanged"));
+
+            return response()->json(['status' => 'success', 'message' => 'Successfully changed password!']);
+        } else {
+            return response('Wrong Password!', 401);
         }
     }
 }

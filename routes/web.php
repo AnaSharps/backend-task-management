@@ -31,6 +31,7 @@ $router->post('/register', 'RegistrationController@registerSelf');
 $router->get('/verifyEmail', ['as' => 'verification', 'uses' => 'EmailController@verifyEmail']);
 $router->post('/register/signup', 'RegistrationController@signup');
 $router->post('/login', 'LoginController@login');
+$router->post('/forgotPass', 'PasswordController@forgotPass');
 
 // Admin Routes
 $router->post('admin/addUser', ['middleware' => 'admin', 'uses' => 'AdminController@addUser']);
@@ -38,7 +39,7 @@ $router->post('admin/addUser', ['middleware' => 'admin', 'uses' => 'AdminControl
 // Authenticated Routes
 $router->group(['prefix' => 'api', 'middleware' => 'auth'],  function () use ($router) {
     $router->get('/allUsers', 'AuthController@getUsers');
-    $router->get('/forgotPass', 'PasswordController@forgotPass');
     $router->post('/resetPass', 'PasswordController@resetPass');
     $router->delete('deleteSelf', 'DeRegisterController@deRegister');
+    $router->post('/changePassword', 'PasswordController@changePassword');
 });

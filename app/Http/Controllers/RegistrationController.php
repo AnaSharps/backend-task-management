@@ -31,12 +31,6 @@ class RegistrationController extends AuthController
             'password' => 'required|string|min:8|max: 255|regex: ' . $this->passPattern,
         ]);
 
-        // Check for password strength
-        // $validPassword = $this -> checkPassword($request -> password);
-        // if ($validPassword !== 'Success') {
-        //     return response() -> json(['status' => 'failure', 'message' => $validPassword]);
-        // }
-
         $token = $request->token;
         $payload = (new GenerateJWT)->decodejwt($token);
 

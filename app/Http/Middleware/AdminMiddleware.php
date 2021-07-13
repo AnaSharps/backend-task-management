@@ -39,6 +39,8 @@ class AdminMiddleware
             } else {
                 return response('Unauthorized. Expired token', 401);
             }
+        } else {
+            return response('Unauthorized Request.', 401);
         }
     }
 }

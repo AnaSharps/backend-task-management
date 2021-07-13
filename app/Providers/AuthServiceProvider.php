@@ -6,7 +6,6 @@ use App\Models\User;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
-use Firebase\JWT\JWT;
 use Illuminate\Support\Facades\Hash;
 
 class AuthServiceProvider extends ServiceProvider
@@ -35,17 +34,6 @@ class AuthServiceProvider extends ServiceProvider
         // the User instance via an API token or any other method necessary.
         
         $this->app['auth']->viaRequest('api', function ($request) {
-            if ($request->bearerToken('token')) {
-                $pub_key = file_get_contents(dirname(dirname(__FILE__)).'../../public.pem');
-
-                $jwt = $request->bearerToken('token');
-                $decoded = JWT::decode($jwt, $pub_key, array('RS256'));
-                
-                $decoded_array = (array) $decoded;
-
-                $user = User::where('Email', $decoded_array['sub']) -> first();
-                return $user;
-            }
         });
     }
 }

@@ -3,6 +3,8 @@
 namespace App\Http\Middleware;
 
 use Closure;
+use App\Models\User;
+use Firebase\JWT\JWT;
 use Illuminate\Contracts\Auth\Factory as Auth;
 
 class Authenticate
@@ -35,10 +37,23 @@ class Authenticate
      */
     public function handle($request, Closure $next, $guard = null)
     {
-        if ($this->auth->guard($guard)->guest()) {
-            return response('Unauthorized.', 401);
-        }
+        if ($request->bearerToken('token')) {
+            $key = env('KEY_JWT');
 
-        return $next($request);
+            $jwt = $request->bearerToken('token');
+
+            try {
+                $decoded = JWT::decode($jwt, $key, array('HS256'));
+
+                $user = User::where('Email', $decoded->sub)->first();
+                if ($user) {
+                    return $next($request);
+                } else {
+                    return response('Unauthorized.', 401);
+                }
+            } catch (\Exception $e) {
+                return response($e->getMessage(), 500);
+            }
+        }
     }
 }

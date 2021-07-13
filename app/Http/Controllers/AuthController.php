@@ -5,9 +5,7 @@
 namespace App\Http\Controllers;
 
 use App\Mail\Registered;
-use App\Mail\ResetPassword;
-use App\Mail\PasswordChanged;
-use App\Mail\EmailVerification;
+use App\Mail\Email;
 use App\Models\User;
 use Exception;
 use Illuminate\Http\Request;
@@ -124,7 +122,7 @@ class AuthController extends Controller
                 'createdBy' => $user->Created_by,
                 'role' => $user->Role,
                 'iat' => $nowTime,
-                'exp' => $nowTime + (60 * 60),
+                'exp' => $nowTime + (60 * 60 * 24),
             );
             $jwt = $this->genjwt($payload);
 
@@ -141,12 +139,14 @@ class AuthController extends Controller
             'sub' => $email,
             'createdBy' => $createdBy,
             'iat' => $nowSeconds,
-            'exp' => $nowSeconds + (60 * 5),
+            'exp' => $nowSeconds + (60 * 60),
         );
 
         $newjwt = $this->genjwt($payload);
-        $url = "http://localhost:8000/verifyEmail/?token=" . $newjwt;
-        Mail::to($email)->send(new EmailVerification($url));
+        $subject = "Email Verification";
+        $view = "emails.verificationEmail";
+        Mail::to($email)->send(new Email($newjwt, $subject, $view));
+        return response()->json(['status' => "success", "message" => "Email Verification link has been sent to your email address. Please Click the link to complete your registration!", 'token' => $newjwt]);
     }
 
     public function registerSelf(Request $request)
@@ -187,12 +187,14 @@ class AuthController extends Controller
             if ($user) {
                 $nowSeconds = time();
                 $payload['iat'] = $nowSeconds;
-                $payload['exp'] = $nowSeconds + (60 * 5);
+                $payload['exp'] = $nowSeconds + (60 * 60);
 
                 $newjwt = $this->genjwt($payload);
                 $url = "http://localhost:8000/api/resetPass/?token=" . $newjwt;
                 $email = strtolower($user->Email);
-                Mail::to($email)->send(new ResetPassword($url));
+                Mail::to($email)->send(new Email($newjwt, "Reset Password", "emails.resetPass"));
+
+                return response()->json(['status' => 'success', 'message' => 'Successfully sent Reset Password link to your email address.', 'token' => $newjwt]);
             }
         } else {
         }
@@ -215,7 +217,7 @@ class AuthController extends Controller
 
             if ($user->save()) {
                 $email = strtolower($email);
-                Mail::to($email)->send(new PasswordChanged());
+                Mail::to($email)->send(new Email("", "Password Changed", "emails.passChanged"));
                 return response()->json(['status' => 'success', 'message' => 'Successfully changed password!']);
             }
         } else {

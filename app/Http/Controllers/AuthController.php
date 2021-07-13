@@ -9,6 +9,8 @@ use App\Mail\Email;
 use App\Models\User;
 use Exception;
 use Illuminate\Http\Request;
+use App\Helper\GenerateJWT;
+use App\Helper\RegisterUser;
 
 use Firebase\JWT\JWT;
 // use Illuminate\Support\Facades\Http;
@@ -16,43 +18,13 @@ use Illuminate\Support\Facades\Mail;
 
 class AuthController extends Controller
 {
-    private $key;
     public $passPattern;
     public $emailPattern;
 
     public function __construct()
     {
-        $this->key = env("KEY_JWT");
         $this->passPattern = env("PASSWORD_FORMAT");
         $this->emailPattern = env("EMAIL_FORMAT");
-    }
-
-    public function genjwt(array $payload)
-    {
-        if (!empty($payload)) {
-            try {
-                $jwt = JWT::encode($payload, $this->key);
-
-                return $jwt;
-            } catch (\Exception $e) {
-                return response()->json(['status' => 'error', 'message' => $e->getMessage()]);
-            }
-        }
-    }
-
-    public function decodejwt(String $jwt)
-    {
-        if (!empty($jwt)) {
-            try {
-                $decoded = JWT::decode($jwt, $this->key, array('HS256'));
-
-                $decoded_array = (array) $decoded;
-
-                return $decoded_array;
-            } catch (\Exception $e) {
-                return $e->getMessage();
-            }
-        }
     }
 
     public function getUsers()
@@ -86,7 +58,7 @@ class AuthController extends Controller
         // }
 
         $token = $request->token;
-        $payload = $this->decodejwt($token);
+        $payload = (new GenerateJWT)->decodejwt($token);
 
         if (gettype($payload) === "array") {
             $user = new User();
@@ -126,30 +98,12 @@ class AuthController extends Controller
                 'iat' => $nowTime,
                 'exp' => $nowTime + (60 * 60 * 24),
             );
-            $jwt = $this->genjwt($payload);
+            $jwt = (new GenerateJWT)->genjwt($payload);
 
             return response()->json(['status' => 'success', 'message' => 'Successfully Logged in!', 'token' => $jwt]);
         } else {
             return response()->json(['status' => 'failure', 'message' => 'Invalid credentials']);
         }
-    }
-
-    private function register(String $email, String $createdBy)
-    {
-        print_r($this->emailPattern);
-        $nowSeconds = time();
-        $payload = array(
-            'sub' => $email,
-            'createdBy' => $createdBy,
-            'iat' => $nowSeconds,
-            'exp' => $nowSeconds + (60 * 60),
-        );
-
-        $newjwt = $this->genjwt($payload);
-        $subject = "Email Verification";
-        $view = "emails.verificationEmail";
-        Mail::to($email)->send(new Email($newjwt, $subject, $view));
-        return response()->json(['status' => "success", "message" => "Email Verification link has been sent to your email address. Please Click the link to complete your registration!", 'token' => $newjwt]);
     }
 
     public function registerSelf(Request $request)
@@ -158,12 +112,10 @@ class AuthController extends Controller
             'email' => 'required|email|max: 255|unique:users|regex: ' . $this->emailPattern,
         ]);
 
-        print_r($request->email);
-
         $email = $request->email;
         $createdBy = $request->email;
 
-        return $this->register($email, $createdBy);
+        return (new RegisterUser)->register($email, $createdBy);
     }
 
     public function addUser(Request $request)
@@ -173,12 +125,12 @@ class AuthController extends Controller
             'email' => 'required|max: 255|unique:users|regex: ' . $this->emailPattern,
         ]);
         $token = $request->bearerToken('token');
-        $payload = $this->decodejwt($token);
+        $payload = (new GenerateJWT)->decodejwt($token);
 
         $email = $request->email;
         $createdBy = $payload['sub'];
 
-        return $this->register($email, $createdBy);
+        return (new RegisterUser)->register($email, $createdBy);
     }
 
     public function forgotPass(Request $request)
@@ -186,7 +138,7 @@ class AuthController extends Controller
         if ($request->bearerToken('token')) {
             $token = $request->bearerToken('token');
 
-            $payload = $this->decodejwt($token);
+            $payload = (new GenerateJWT)->decodejwt($token);
             $user = User::where('Email', $payload['sub'])->first();
 
             if ($user) {
@@ -194,7 +146,7 @@ class AuthController extends Controller
                 $payload['iat'] = $nowSeconds;
                 $payload['exp'] = $nowSeconds + (60 * 60);
 
-                $newjwt = $this->genjwt($payload);
+                $newjwt = (new GenerateJWT)->genjwt($payload);
                 $url = "http://localhost:8000/api/resetPass/?token=" . $newjwt;
                 $email = strtolower($user->Email);
                 Mail::to($email)->send(new Email($newjwt, "Reset Password", "emails.resetPass"));
@@ -213,7 +165,7 @@ class AuthController extends Controller
         ]);
 
         $token = $request->token;
-        $payload = $this->decodejwt($token);
+        $payload = (new GenerateJWT)->decodejwt($token);
 
         if (gettype($payload) === "array") {
             $email = $payload['sub'];
@@ -235,7 +187,7 @@ class AuthController extends Controller
         if ($request->bearerToken('token')) {
             $token = $request->bearerToken('token');
 
-            $payload = $this->decodejwt($token);
+            $payload = (new GenerateJWT)->decodejwt($token);
             $email = $payload['sub'];
 
             $user = User::where('Email', $email)->first();

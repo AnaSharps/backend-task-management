@@ -96,7 +96,7 @@ class AuthController extends Controller
             $user->Password = app('hash')->make($request->password);
 
             if ($user->save()) {
-                Mail::to($email)->send(new Registered());
+                Mail::to($email)->send(new Email("", "Successfully Registered!", "emails.registered"));
                 return response()->json(['status' => 'success', 'message' => 'Registered Successfully']);
             }
         } else {

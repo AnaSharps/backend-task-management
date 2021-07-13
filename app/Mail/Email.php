@@ -32,7 +32,7 @@ class Email extends Mailable
             case "Password Changed":
                 $this->url = "";
                 break;
-            case "Registered":
+            case "Successfully Registered!":
                 $this->url = "";
                 break;
             case "Reset Password":

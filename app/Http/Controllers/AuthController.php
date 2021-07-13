@@ -199,16 +199,17 @@ class AuthController extends Controller
             $token = $request -> bearerToken('token');
 
             $payload = $this -> decodejwt($token);
-            $user = User::where('email', $payload['sub']) -> first();
+            $user = User::where('Email', $payload['sub']) -> first();
 
             if ($user) {
                 $nowSeconds = time();
                 $payload['iat'] = $nowSeconds;
-                $payload['exp'] = $nowSeconds + (60*10);
+                $payload['exp'] = $nowSeconds + (60*5);
 
                 $newjwt = $this -> genjwt($payload);
                 $url = "http://localhost:8000/api/resetPass/?token=". $newjwt;
-                Mail::to($user -> email) -> send(new ResetPassword($url));
+                $email = strtolower($user -> Email);
+                Mail::to($email) -> send(new ResetPassword($url));
 
             }
         } else {
@@ -226,14 +227,18 @@ class AuthController extends Controller
         $payload = $this -> decodejwt($token);
         
         try {
-            $email = $payload['sub'];
-            $user = User::where('email', $email) -> first();
-            $user -> password = app('hash') -> make($request->password);
-            // $user -> password = app('hash') -> make('12eD#');
-
-            if ($user -> save()) {
-                Mail::to($email) -> send(new PasswordChanged());
-                return response() -> json(['status' => 'success', 'message' => 'Successfully changed password!']);
+            if (gettype($payload) === "array") {
+                $email = $payload['sub'];
+                $user = User::where('Email', $email) -> first();
+                $user -> Password = app('hash') -> make($request->password);
+    
+                if ($user -> save()) {
+                    $email = strtolower($email);
+                    Mail::to($email) -> send(new PasswordChanged());
+                    return response() -> json(['status' => 'success', 'message' => 'Successfully changed password!']);
+                }
+            } else {
+                return response() -> json(['status' => 'failure', 'message' => 'Token expired!']);
             }
         } catch (\Exception $e) {
             return response() -> json(['status' => 'failure', 'message' => $e -> getMessage()]);

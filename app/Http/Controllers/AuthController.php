@@ -18,11 +18,13 @@ class AuthController extends Controller
 {
     private $key;
     public $passPattern;
+    public $emailPattern;
 
     public function __construct()
     {
         $this->key = env("KEY_JWT");
-        $this->passPattern = "/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[.,!@#$%^&]).+$/";
+        $this->passPattern = env("PASSWORD_FORMAT");
+        $this->emailPattern = env("EMAIL_FORMAT");
     }
 
     public function genjwt(array $payload)
@@ -73,8 +75,8 @@ class AuthController extends Controller
     {
         $this->validate($request, [
             'token' => 'required|string',
-            'username' => 'required|string',
-            'password' => 'required|string|min:8|regex: ' . $this->passPattern,
+            'username' => 'required|string|max: 50',
+            'password' => 'required|string|min:8|max: 255|regex: ' . $this->passPattern,
         ]);
 
         // Check for password strength
@@ -107,8 +109,8 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $this->validate($request, [
-            'email' => 'required|email',
-            'password' => 'required|string',
+            'email' => 'required|email|max: 255|regex: ' . $this->emailPattern,
+            'password' => 'required|min: 8|max: 255|string|regex: ' . $this->passPattern,
         ]);
 
 
@@ -134,6 +136,7 @@ class AuthController extends Controller
 
     private function register(String $email, String $createdBy)
     {
+        print_r($this->emailPattern);
         $nowSeconds = time();
         $payload = array(
             'sub' => $email,
@@ -152,8 +155,10 @@ class AuthController extends Controller
     public function registerSelf(Request $request)
     {
         $this->validate($request, [
-            'email' => 'required|email|unique:users',
+            'email' => 'required|email|max: 255|unique:users|regex: ' . $this->emailPattern,
         ]);
+
+        print_r($request->email);
 
         $email = $request->email;
         $createdBy = $request->email;
@@ -165,7 +170,7 @@ class AuthController extends Controller
     {
         //after admin validation through provider
         $this->validate($request, [
-            'email' => 'required|email|unique:users',
+            'email' => 'required|max: 255|unique:users|regex: ' . $this->emailPattern,
         ]);
         $token = $request->bearerToken('token');
         $payload = $this->decodejwt($token);
@@ -204,7 +209,7 @@ class AuthController extends Controller
     {
         $this->validate($request, [
             'token' => 'required|string',
-            'password' => 'required|string|min:8|regex: ' . $this->passPattern,
+            'password' => 'required|string|min:8|max: 255|max: 255|regex: ' . $this->passPattern,
         ]);
 
         $token = $request->token;

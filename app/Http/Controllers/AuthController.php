@@ -195,6 +195,22 @@ class AuthController extends Controller
         return $this -> register($username, $email, $createdBy);
     }
 
+    public function addUser(Request $request) {
+        //after admin validation through provider
+        $this -> validate($request, [
+            'username' => 'required|string',
+            'email' => 'required|email|unique:users',
+        ]);
+        $token = $request -> bearerToken('token');
+        $payload = $this ->decodejwt($token);
+
+        $username = $request -> username;
+        $email = $request -> email;
+        $createdBy = $payload['sub'];
+
+        return $this -> register($username, $email, $createdBy);
+    }
+
     public function forgotPass(Request $request) {
         if ($request -> bearerToken('token')) {
             $token = $request -> bearerToken('token');

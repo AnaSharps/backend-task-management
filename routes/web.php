@@ -19,20 +19,21 @@ $router->get('/', function () use ($router) {
     return $router->app->version();
 });
 
-$router->post('/user', 'AuthController@genjwt');
-$router->get('/allUsers', 'AuthController@getUsers');
+// $router->post('/user', 'AuthController@genjwt');
 $router->post('/register', 'AuthController@registerSelf');
 $router->get('/verifyEmail', ['as' => 'verification', 'uses' => 'AuthController@verifyEmail']);
 $router->post('/register/signup', 'AuthController@signup');
 $router->post('/login', 'AuthController@login');
 
 $router->group(['prefix' => 'api', 'middleware' => 'auth'],  function () use ($router) {
-    $router->get('/posts', 'PostController@index');
-    $router->post('/posts', 'PostController@store'); 
-    $router->put('/posts/{id}', 'PostController@update');
-    $router->delete('/posts/{id}', 'PostController@destroy');
+    $router->get('/allUsers', 'AuthController@getUsers');
+    // $router->get('/posts', 'PostController@index');
+    // $router->post('/posts', 'PostController@store'); 
+    // $router->put('/posts/{id}', 'PostController@update');
+    // $router->delete('/posts/{id}', 'PostController@destroy');
     $router->get('/forgotPass', 'AuthController@forgotPass');
     $router->post('/resetPass', 'AuthController@resetPass');
     $router->delete('deleteSelf', 'AuthController@deRegister');
+    // $router->post('/admin/addUser', ['middleware' => 'role:Admin', 'AuthController@addUser']);
     $router->post('/addUser', 'AuthController@addUser');
 });

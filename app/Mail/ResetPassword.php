@@ -7,7 +7,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
-class Registered extends Mailable
+class ResetPassword extends Mailable
 {
     use Queueable, SerializesModels;
 
@@ -16,9 +16,11 @@ class Registered extends Mailable
      *
      * @return void
      */
-    public function __construct()
+    public $url;
+    
+    public function __construct(String $url)
     {
-        //
+        $this -> url = $url;
     }
 
     /**
@@ -28,6 +30,7 @@ class Registered extends Mailable
      */
     public function build()
     {
-        return $this->subject('Successful Registration!')->view('emails.registered');
+        print_r($this -> url);
+        return $this->view('emails.resetPass');
     }
 }

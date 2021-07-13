@@ -7,7 +7,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
-class Registered extends Mailable
+class PasswordChanged extends Mailable
 {
     use Queueable, SerializesModels;
 
@@ -16,10 +16,8 @@ class Registered extends Mailable
      *
      * @return void
      */
-    public function __construct()
-    {
-        //
-    }
+    
+    public function __construct() {}
 
     /**
      * Build the message.
@@ -28,6 +26,6 @@ class Registered extends Mailable
      */
     public function build()
     {
-        return $this->subject('Successful Registration!')->view('emails.registered');
+        return $this->view('emails.passChanged');
     }
 }

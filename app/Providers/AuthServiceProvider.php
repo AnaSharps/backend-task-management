@@ -39,7 +39,6 @@ class AuthServiceProvider extends ServiceProvider
                 $pub_key = file_get_contents(dirname(dirname(__FILE__)).'../../public.pem');
 
                 $jwt = $request->bearerToken('token');
-                // print_r($request->bearerToken('token'));
                 $decoded = JWT::decode($jwt, $pub_key, array('RS256'));
                 
                 /*
@@ -48,12 +47,11 @@ class AuthServiceProvider extends ServiceProvider
                 */
                 
                 $decoded_array = (array) $decoded;
-                // print_r($decoded_array);
 
                 $user = User::where('email', $decoded_array['sub']) -> first();
-                if (app('hash')->check($decoded_array['pass'], $user -> password)) {
+                // if (app('hash')->check($decoded_array['pass'], $user -> password)) {
                     return $user;
-                }                
+                // }
             }
         });
     }

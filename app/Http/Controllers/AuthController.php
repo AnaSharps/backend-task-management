@@ -58,22 +58,22 @@ class AuthController extends Controller
         }
     }
 
-    public function checkPassword($pwd) {
+    // public function checkPassword($pwd) {
     
-        if (strlen($pwd) < 8) {
-            return 'Password must be atleast 8 characters long!';
-        } else if (!preg_match("#[0-9]+#", $pwd)) {
-            return 'Password must include at least one digit!';
-        } else if (!preg_match("#[a-z]+#", $pwd)) {
-            return 'Password must include at least one lowercase letter!';
-        } else if (!preg_match("#[A-Z]+#", $pwd)) {
-            return 'Password must include at least one uppercase letter!';
-        } else if (!preg_match("#[!@\#$%^&*]+#", $pwd)) {
-            return 'Password must include at least one special character!';
-        }
+    //     if (strlen($pwd) < 8) {
+    //         return 'Password must be atleast 8 characters long!';
+    //     } else if (!preg_match("#[0-9]+#", $pwd)) {
+    //         return 'Password must include at least one digit!';
+    //     } else if (!preg_match("#[a-z]+#", $pwd)) {
+    //         return 'Password must include at least one lowercase letter!';
+    //     } else if (!preg_match("#[A-Z]+#", $pwd)) {
+    //         return 'Password must include at least one uppercase letter!';
+    //     } else if (!preg_match("#[!@\#$%^&*]+#", $pwd)) {
+    //         return 'Password must include at least one special character!';
+    //     }
 
-        return 'Success';
-    }
+    //     return 'Success';
+    // }
  
     public function getUsers() {
         return User::all();
@@ -107,14 +107,14 @@ class AuthController extends Controller
         try {
             if (gettype($payload) === "array") {
                 $user = new User();
-                $user -> Name = $payload['iss'];
-                $user -> Email = $payload['sub'];
-                $user -> Role = 'Normal';
-                $user -> Created_by = $payload['createdBy'];
+                $user -> Name = strtoupper($payload['iss']);
+                $user -> Email = strtoupper($payload['sub']);
+                $user -> Role = strtoupper('Normal');
+                $user -> Created_by = strtoupper($payload['createdBy']);
                 $user -> Password = app('hash') -> make($request->password);
 
                 if ($user -> save()) {
-                    Mail::to($user -> email) -> send(new Registered());
+                    Mail::to(strtolower($user -> email)) -> send(new Registered());
                     return response() -> json(['status' => 'success', 'message' => 'Registered Successfully']);
                 }
             } else {

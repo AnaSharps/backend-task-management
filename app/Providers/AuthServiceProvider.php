@@ -41,17 +41,10 @@ class AuthServiceProvider extends ServiceProvider
                 $jwt = $request->bearerToken('token');
                 $decoded = JWT::decode($jwt, $pub_key, array('RS256'));
                 
-                /*
-                NOTE: This will now be an object instead of an associative array. To get
-                an associative array, you will need to cast it as such:
-                */
-                
                 $decoded_array = (array) $decoded;
 
-                $user = User::where('email', $decoded_array['sub']) -> first();
-                // if (app('hash')->check($decoded_array['pass'], $user -> password)) {
-                    return $user;
-                // }
+                $user = User::where('Email', $decoded_array['sub']) -> first();
+                return $user;
             }
         });
     }

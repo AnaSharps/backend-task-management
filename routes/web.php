@@ -21,7 +21,7 @@ $router->get('/', function () use ($router) {
 
 $router->post('/user', 'AuthController@genjwt');
 $router->get('/allUsers', 'AuthController@getUsers');
-$router->post('/register/verify', 'AuthController@registerUser');
+$router->post('/register', 'AuthController@registerSelf');
 $router->get('/verifyEmail', ['as' => 'verification', 'uses' => 'AuthController@verifyEmail']);
 $router->post('/register/signup', 'AuthController@signup');
 $router->post('/login', 'AuthController@login');

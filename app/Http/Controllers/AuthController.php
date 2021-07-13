@@ -58,22 +58,22 @@ class AuthController extends Controller
         }
     }
 
-    public function checkPassword($pwd) {
+    // public function checkPassword($pwd) {
     
-        if (strlen($pwd) < 8) {
-            return 'Password must be atleast 8 characters long!';
-        } else if (!preg_match("#[0-9]+#", $pwd)) {
-            return 'Password must include at least one digit!';
-        } else if (!preg_match("#[a-z]+#", $pwd)) {
-            return 'Password must include at least one lowercase letter!';
-        } else if (!preg_match("#[A-Z]+#", $pwd)) {
-            return 'Password must include at least one uppercase letter!';
-        } else if (!preg_match("#[!@\#$%^&*]+#", $pwd)) {
-            return 'Password must include at least one special character!';
-        }
+    //     if (strlen($pwd) < 8) {
+    //         return 'Password must be atleast 8 characters long!';
+    //     } else if (!preg_match("#[0-9]+#", $pwd)) {
+    //         return 'Password must include at least one digit!';
+    //     } else if (!preg_match("#[a-z]+#", $pwd)) {
+    //         return 'Password must include at least one lowercase letter!';
+    //     } else if (!preg_match("#[A-Z]+#", $pwd)) {
+    //         return 'Password must include at least one uppercase letter!';
+    //     } else if (!preg_match("#[!@\#$%^&*]+#", $pwd)) {
+    //         return 'Password must include at least one special character!';
+    //     }
 
-        return 'Success';
-    }
+    //     return 'Success';
+    // }
  
     public function getUsers() {
         return User::all();
@@ -86,13 +86,7 @@ class AuthController extends Controller
 
         $token = $request -> token;
 
-        $payload = $this -> decodejwt($token);
-
-        if (gettype($payload) == 'array') {
-            return redirect('http://localhost:8000/register/signup/?token='.$token);
-        } else {
-            return response() -> json(['status' => 'failure', 'message' => 'Token expired']);
-        }
+        return redirect('http://localhost:8000/register/signup/?token='.$token);
     }
 
     public function signup(Request $request) {
@@ -113,14 +107,15 @@ class AuthController extends Controller
         try {
             if (gettype($payload) === "array") {
                 $user = new User();
-                $user -> username = $payload['iss'];
-                $user -> email = $payload['sub'];
-                $user -> role = 'normal';
-                $user -> password = app('hash') -> make($request->password);
-                // $user -> password = app('hash') -> make('123456');
+                $email = $payload['sub'];
+                $user -> Name = strtoupper($payload['iss']);
+                $user -> Email = strtoupper($email);
+                $user -> Role = strtoupper('Normal');
+                $user -> Created_by = strtoupper($payload['createdBy']);
+                $user -> Password = app('hash') -> make($request->password);
 
                 if ($user -> save()) {
-                    Mail::to($user -> email) -> send(new Registered());
+                    Mail::to($email) -> send(new Registered());
                     return response() -> json(['status' => 'success', 'message' => 'Registered Successfully']);
                 }
             } else {
@@ -140,20 +135,21 @@ class AuthController extends Controller
 
         
         try {
-            // $hashedPass = app('hash') -> make($request -> password);
-            $user = User::where('email', $request -> email) -> first();
+            $user = User::where('Email', strtoupper($request -> email)) -> first();
 
-            if ($user && app('hash') -> check($request->password, $user['password'])) {
+            if ($user && app('hash') -> check($request->password, $user['Password'])) {
                 $nowTime = time();
                 $payload = array(
-                    'iss' => $user -> username,
-                    'sub' => $request -> email,
+                    'iss' => $user -> Name,
+                    'sub' => $user -> Email,
+                    'createdBy' => $user -> Created_by,
+                    'role' => $user -> Role,
                     'iat' => $nowTime,
-                    'exp' => $nowTime + (60*2),
+                    'exp' => $nowTime + (60*60),
                 );
                 $jwt = JWT::encode($payload, $this->priv_key, 'RS256');
                 
-                return response() -> json(['status' => 'success', 'message' => $jwt]);
+                return response() -> json(['status' => 'success', 'message' => 'Successfully Logged in!', 'token' => $jwt]);
             } else {
                 return response() -> json(['status' => 'failure', 'message' => 'Invalid credentials']);
             }
@@ -163,32 +159,40 @@ class AuthController extends Controller
         }
 
     }
+    
+    private function register(String $username, String $email, String $createdBy) {
+        try {
+            $nowSeconds = time();
+            $payload = array(
+                'iss' => $username,
+                'sub' => $email,
+                'createdBy' => $createdBy,
+                'iat' => $nowSeconds,
+                'exp' => $nowSeconds + (60*5),
+            );
+        
+            $newjwt = $this -> genjwt($payload);
+            $url = "http://localhost:8000/verifyEmail/?token=". $newjwt;
+            Mail::to($email) -> send(new EmailVerification($url));
+            
+        } catch (Exception $e) {
+            return response() -> json(['status' => 'failure', 'message' => $e -> getMessage()]);
+        }
 
-    public function registerUser(Request $request) {
+        
+    }
+
+    public function registerSelf(Request $request) {
         $this->validate($request, [
             'username' => 'required|string',
             'email' => 'required|email|unique:users',
         ]);
 
-        try {
+        $username = $request -> username;
+        $email = $request -> email;
+        $createdBy = $request -> email;
 
-            $nowSeconds = time();
-            $payload = array(
-                'iss' => $request -> username,
-                'sub' => $request -> email,
-                'iat' => $nowSeconds,
-                'exp' => $nowSeconds + (60*5),
-            );
-
-            $newjwt = $this -> genjwt($payload);
-            $url = "http://localhost:8000/verifyEmail/?token=". $newjwt;
-            Mail::to($request -> input('email')) -> send(new EmailVerification($url));
-
-            return response() -> json(['status' => 'success', 'message' => 'Verification email has been sent to your email id', 'url' => $url]);
-
-        } catch (Exception $e) {
-            return response() -> json(['status' => 'failure', 'message' => $e -> getMessage()]);
-        }
+        return $this -> register($username, $email, $createdBy);
     }
 
     public function forgotPass(Request $request) {
@@ -196,16 +200,17 @@ class AuthController extends Controller
             $token = $request -> bearerToken('token');
 
             $payload = $this -> decodejwt($token);
-            $user = User::where('email', $payload['sub']) -> first();
+            $user = User::where('Email', $payload['sub']) -> first();
 
             if ($user) {
                 $nowSeconds = time();
                 $payload['iat'] = $nowSeconds;
-                $payload['exp'] = $nowSeconds + (60*10);
+                $payload['exp'] = $nowSeconds + (60*5);
 
                 $newjwt = $this -> genjwt($payload);
                 $url = "http://localhost:8000/api/resetPass/?token=". $newjwt;
-                Mail::to($user -> email) -> send(new ResetPassword($url));
+                $email = strtolower($user -> Email);
+                Mail::to($email) -> send(new ResetPassword($url));
 
             }
         } else {
@@ -223,14 +228,18 @@ class AuthController extends Controller
         $payload = $this -> decodejwt($token);
         
         try {
-            $email = $payload['sub'];
-            $user = User::where('email', $email) -> first();
-            $user -> password = app('hash') -> make($request->password);
-            // $user -> password = app('hash') -> make('12eD#');
-
-            if ($user -> save()) {
-                Mail::to($email) -> send(new PasswordChanged());
-                return response() -> json(['status' => 'success', 'message' => 'Successfully changed password!']);
+            if (gettype($payload) === "array") {
+                $email = $payload['sub'];
+                $user = User::where('Email', $email) -> first();
+                $user -> Password = app('hash') -> make($request->password);
+    
+                if ($user -> save()) {
+                    $email = strtolower($email);
+                    Mail::to($email) -> send(new PasswordChanged());
+                    return response() -> json(['status' => 'success', 'message' => 'Successfully changed password!']);
+                }
+            } else {
+                return response() -> json(['status' => 'failure', 'message' => 'Token expired!']);
             }
         } catch (\Exception $e) {
             return response() -> json(['status' => 'failure', 'message' => $e -> getMessage()]);
@@ -247,7 +256,7 @@ class AuthController extends Controller
             $email = $payload['sub'];
 
             try {
-                $user = User::where('email', $email) -> first();
+                $user = User::where('Email', $email) -> first();
     
                 if ($user -> delete()) {
                     return response() -> json(['status' => 'success', 'message' => 'Successfully dereggistered!']);

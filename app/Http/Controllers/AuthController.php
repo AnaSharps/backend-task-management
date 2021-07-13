@@ -256,7 +256,6 @@ class AuthController extends Controller
             $email = $payload['sub'];
 
             try {
-                $email = strtolower($email);
                 $user = User::where('Email', $email) -> first();
     
                 if ($user -> delete()) {

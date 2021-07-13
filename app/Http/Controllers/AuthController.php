@@ -32,34 +32,6 @@ class AuthController extends Controller
         return User::all();
     }
 
-    public function login(Request $request)
-    {
-        $this->validate($request, [
-            'email' => 'required|email|max: 255|regex: ' . $this->emailPattern,
-            'password' => 'required|min: 8|max: 255|string|regex: ' . $this->passPattern,
-        ]);
-
-
-        $user = User::where('Email', strtoupper($request->email))->first();
-
-        if ($user && app('hash')->check($request->password, $user['Password'])) {
-            $nowTime = time();
-            $payload = array(
-                'iss' => $user->Name,
-                'sub' => $user->Email,
-                'createdBy' => $user->Created_by,
-                'role' => $user->Role,
-                'iat' => $nowTime,
-                'exp' => $nowTime + (60 * 60 * 24),
-            );
-            $jwt = (new GenerateJWT)->genjwt($payload);
-
-            return response()->json(['status' => 'success', 'message' => 'Successfully Logged in!', 'token' => $jwt]);
-        } else {
-            return response()->json(['status' => 'failure', 'message' => 'Invalid credentials']);
-        }
-    }
-
     public function addUser(Request $request)
     {
         //after admin validation through provider

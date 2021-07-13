@@ -29,7 +29,7 @@ $router->get('/', function () use ($router) {
 $router->post('/register', 'RegistrationController@registerSelf');
 $router->get('/verifyEmail', ['as' => 'verification', 'uses' => 'EmailController@verifyEmail']);
 $router->post('/register/signup', 'RegistrationController@signup');
-$router->post('/login', 'AuthController@login');
+$router->post('/login', 'LoginController@login');
 
 $router->group(['prefix' => 'api', 'middleware' => 'auth'],  function () use ($router) {
     $router->get('/allUsers', 'AuthController@getUsers');

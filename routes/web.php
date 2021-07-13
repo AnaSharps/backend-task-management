@@ -31,8 +31,8 @@ $router->group(['prefix' => 'api', 'middleware' => 'auth'],  function () use ($r
     // $router->post('/posts', 'PostController@store'); 
     // $router->put('/posts/{id}', 'PostController@update');
     // $router->delete('/posts/{id}', 'PostController@destroy');
-    $router->get('/forgotPass', 'AuthController@forgotPass');
-    $router->post('/resetPass', 'AuthController@resetPass');
+    $router->get('/forgotPass', 'PasswordController@forgotPass');
+    $router->post('/resetPass', 'PasswordController@resetPass');
     $router->delete('deleteSelf', 'AuthController@deRegister');
     // $router->post('/admin/addUser', ['middleware' => 'role:Admin', 'AuthController@addUser']);
     $router->post('/addUser', 'AuthController@addUser');

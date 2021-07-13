@@ -32,20 +32,6 @@ class AuthController extends Controller
         return User::all();
     }
 
-    public function addUser(Request $request)
-    {
-        //after admin validation through provider
-        $this->validate($request, [
-            'email' => 'required|max: 255|unique:users|regex: ' . $this->emailPattern,
-        ]);
-        $token = $request->bearerToken('token');
-        $payload = (new GenerateJWT)->decodejwt($token);
-
-        $email = $request->email;
-        $createdBy = $payload['sub'];
-
-        return (new RegisterUser)->register($email, $createdBy);
-    }
 
     public function deRegister(Request $request)
     {
@@ -61,5 +47,5 @@ class AuthController extends Controller
                 return response()->json(['status' => 'success', 'message' => 'Successfully dereggistered!']);
             }
         }
-    } //soft delete
+    }
 }

@@ -34,13 +34,7 @@ class AuthController extends Controller
 
         $token = $request -> token;
 
-        $payload = $this -> decodejwt($token);
-
-        if (gettype($payload) == 'array') {
-            return redirect('http://localhost:8000/register/signup/?token='.$token);
-        } else {
-            return response() -> json(['status' => 'failure', 'message' => 'Token expired']);
-        }
+        return redirect('http://localhost:8000/register/signup/?token='.$token);
     }
 
     public function signup(Request $request) {
@@ -61,11 +55,11 @@ class AuthController extends Controller
         try {
             if (gettype($payload) === "array") {
                 $user = new User();
-                $user -> username = $payload['iss'];
-                $user -> email = $payload['sub'];
-                $user -> role = 'normal';
-                $user -> password = app('hash') -> make($request->password);
-                // $user -> password = app('hash') -> make('123456');
+                $user -> Name = $payload['iss'];
+                $user -> Email = $payload['sub'];
+                $user -> Role = 'Normal';
+                $user -> Created_by = $payload['createdBy'];
+                $user -> Password = app('hash') -> make($request->password);
 
                 if ($user -> save()) {
                     return response() -> json(['status' => 'success', 'message' => 'Registered Successfully']);
@@ -110,30 +104,40 @@ class AuthController extends Controller
         }
 
     }
+    
+    private function register(String $username, String $email, String $createdBy) {
+        try {
+            $nowSeconds = time();
+            $payload = array(
+                'iss' => $username,
+                'sub' => $email,
+                'createdBy' => $createdBy,
+                'iat' => $nowSeconds,
+                'exp' => $nowSeconds + (60*5),
+            );
+        
+            $newjwt = $this -> genjwt($payload);
+            $url = "http://localhost:8000/verifyEmail/?token=". $newjwt;
+            Mail::to($email) -> send(new EmailVerification($url));
+            
+        } catch (Exception $e) {
+            return response() -> json(['status' => 'failure', 'message' => $e -> getMessage()]);
+        }
 
-    public function registerUser(Request $request) {
+        
+    }
+
+    public function registerSelf(Request $request) {
         $this->validate($request, [
             'username' => 'required|string',
             'email' => 'required|email|unique:users',
         ]);
 
-        try {
+        $username = $request -> username;
+        $email = $request -> email;
+        $createdBy = $request -> email;
 
-            $nowSeconds = time();
-            $payload = array(
-                'iss' => $request -> username,
-                'sub' => $request -> email,
-                'iat' => $nowSeconds,
-                'exp' => $nowSeconds + (60*5),
-            );
-
-            $newjwt = $this -> genjwt($payload);
-            $url = "http://localhost:8000/verifyEmail/?token=". $newjwt;
-            Mail::to($request -> input('email')) -> send(new EmailVerification($url));
-
-        } catch (Exception $e) {
-            return response() -> json(['status' => 'failure', 'message' => $e -> getMessage()]);
-        }
+        return $this -> register($username, $email, $createdBy);
     }
 
     public function genjwt(Array $payload) {

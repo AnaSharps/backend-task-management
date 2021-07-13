@@ -32,17 +32,6 @@ class AuthController extends Controller
         return User::all();
     }
 
-    public function verifyEmail(Request $request)
-    {
-        $this->validate($request, [
-            'token' => 'required|string',
-        ]);
-
-        $token = $request->token;
-
-        return redirect('http://localhost:8000/register/signup/?token=' . $token);
-    }
-
     public function login(Request $request)
     {
         $this->validate($request, [

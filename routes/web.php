@@ -15,25 +15,26 @@ use App\Models\User;
 |
 */
 
+// $router->get('/posts', 'PostController@index');
+// $router->post('/posts', 'PostController@store'); 
+// $router->put('/posts/{id}', 'PostController@update');
+// $router->delete('/posts/{id}', 'PostController@destroy');
+// $router->post('/user', 'AuthController@genjwt');
+// $router->post('/admin/addUser', ['middleware' => 'role:Admin', 'AuthController@addUser']);
+
 $router->get('/', function () use ($router) {
     return $router->app->version();
 });
 
-// $router->post('/user', 'AuthController@genjwt');
 $router->post('/register', 'RegistrationController@registerSelf');
-$router->get('/verifyEmail', ['as' => 'verification', 'uses' => 'AuthController@verifyEmail']);
+$router->get('/verifyEmail', ['as' => 'verification', 'uses' => 'EmailController@verifyEmail']);
 $router->post('/register/signup', 'RegistrationController@signup');
 $router->post('/login', 'AuthController@login');
 
 $router->group(['prefix' => 'api', 'middleware' => 'auth'],  function () use ($router) {
     $router->get('/allUsers', 'AuthController@getUsers');
-    // $router->get('/posts', 'PostController@index');
-    // $router->post('/posts', 'PostController@store'); 
-    // $router->put('/posts/{id}', 'PostController@update');
-    // $router->delete('/posts/{id}', 'PostController@destroy');
     $router->get('/forgotPass', 'PasswordController@forgotPass');
     $router->post('/resetPass', 'PasswordController@resetPass');
     $router->delete('deleteSelf', 'AuthController@deRegister');
-    // $router->post('/admin/addUser', ['middleware' => 'role:Admin', 'AuthController@addUser']);
     $router->post('/addUser', 'AuthController@addUser');
 });

@@ -3,41 +3,22 @@
 namespace App\Http\Middleware;
 
 use Closure;
-use App\Models\User;
 use Firebase\JWT\JWT;
-use Illuminate\Contracts\Auth\Factory as Auth;
+use App\Models\User;
 use App\Helper\GenerateJWT;
 
-class Authenticate
+class AdminMiddleware
 {
-    /**
-     * The authentication guard factory instance.
-     *
-     * @var \Illuminate\Contracts\Auth\Factory
-     */
-    protected $auth;
-
-    /**
-     * Create a new middleware instance.
-     *
-     * @param  \Illuminate\Contracts\Auth\Factory  $auth
-     * @return void
-     */
-    public function __construct(Auth $auth)
-    {
-        $this->auth = $auth;
-    }
-
     /**
      * Handle an incoming request.
      *
      * @param  \Illuminate\Http\Request  $request
      * @param  \Closure  $next
-     * @param  string|null  $guard
      * @return mixed
      */
-    public function handle($request, Closure $next, $guard = null)
+    public function handle($request, Closure $next)
     {
+        // Pre-Middleware Action
         if ($request->bearerToken('token')) {
 
             $jwt = $request->bearerToken('token');
@@ -46,7 +27,11 @@ class Authenticate
 
             if (gettype($decoded) === "array") {
                 $user = User::where('Email', $decoded['sub'])->first();
-                if ($user) {
+                if ($user && $user->Role === "ADMIN") {
+                    $response = $next($request);
+
+                    // Post-Middleware Action
+
                     return $next($request);
                 } else {
                     return response('Unauthorized.', 401);

@@ -15,7 +15,6 @@ class LoginController extends AuthController
             'password' => 'required|max: 255|string',
         ]);
 
-
         $user = User::where('Email', strtoupper($request->email))->first();
 
         if ($user && app('hash')->check($request->password, $user['Password'])) {

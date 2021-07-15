@@ -15,23 +15,32 @@ use App\Models\User;
 |
 */
 
+// $router->get('/posts', 'PostController@index');
+// $router->post('/posts', 'PostController@store'); 
+// $router->put('/posts/{id}', 'PostController@update');
+// $router->delete('/posts/{id}', 'PostController@destroy');
+// $router->post('/user', 'AuthController@genjwt');
+// $router->post('/admin/addUser', ['middleware' => 'role:Admin', 'AuthController@addUser']);
+
 $router->get('/', function () use ($router) {
     return $router->app->version();
 });
 
-$router->post('/user', 'AuthController@genjwt');
-$router->get('/allUsers', 'AuthController@getUsers');
-$router->post('/register', 'AuthController@registerSelf');
-$router->get('/verifyEmail', ['as' => 'verification', 'uses' => 'AuthController@verifyEmail']);
-$router->post('/register/signup', 'AuthController@signup');
-$router->post('/login', 'AuthController@login');
+// Authentication Routes 
+$router->post('/register', 'RegistrationController@registerSelf');
+$router->get('/verifyEmail', ['as' => 'verification', 'uses' => 'EmailController@verifyEmail']);
+$router->post('/register/signup', 'RegistrationController@signup');
+$router->post('/login', 'LoginController@login');
+$router->post('/forgotPass', 'PasswordController@forgotPass');
 
+// Admin Routes
+$router->post('admin/addUser', ['middleware' => 'admin', 'uses' => 'AdminController@addUser']);
+$router->post('admin/deleteUser', ['middleware' => 'admin', 'uses' => 'AdminController@deleteUser']);
+
+// Authenticated Routes
 $router->group(['prefix' => 'api', 'middleware' => 'auth'],  function () use ($router) {
-    $router->get('/posts', 'PostController@index');
-    $router->post('/posts', 'PostController@store'); 
-    $router->put('/posts/{id}', 'PostController@update');
-    $router->delete('/posts/{id}', 'PostController@destroy');
-    $router->get('/forgotPass', 'AuthController@forgotPass');
-    $router->post('/resetPass', 'AuthController@resetPass');
-    $router->delete('deleteSelf', 'AuthController@deRegister');
+    $router->post('/allUsers', 'AuthController@getUsers');
+    $router->post('/resetPass', 'PasswordController@resetPass');
+    $router->delete('deleteSelf', 'DeRegisterController@deRegister');
+    $router->post('/changePassword', 'PasswordController@changePassword');
 });

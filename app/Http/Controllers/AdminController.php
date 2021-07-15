@@ -54,7 +54,7 @@ class AdminController extends AuthController
                 return response('No such user exists', 400);
             }
         } else {
-            return response('Unauthorized Request', 401);
+            return response('Unauthorized Request', 403);
         }
     }
 }

@@ -34,13 +34,13 @@ class AdminMiddleware
 
                     return $next($request);
                 } else {
-                    return response('Unauthorized.', 401);
+                    return response('Unauthorized.', 403);
                 }
             } else {
-                return response('Unauthorized. Expired token', 401);
+                return response('Unauthorized. Expired token', 403);
             }
         } else {
-            return response('Unauthorized Request.', 401);
+            return response('Unauthorized Request.', 403);
         }
     }
 }

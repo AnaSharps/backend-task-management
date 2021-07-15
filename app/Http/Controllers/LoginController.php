@@ -15,15 +15,15 @@ class LoginController extends AuthController
             'password' => 'required|max: 255|string',
         ]);
 
-        $user = User::where('Email', strtoupper($request->email))->first();
+        $user = User::where('email', strtoupper($request->email))->first();
 
-        if ($user && !($user->is_deleted) && app('hash')->check($request->password, $user['Password'])) {
+        if ($user && !($user->isDeleted) && app('hash')->check($request->password, $user['Password'])) {
             $nowTime = time();
             $payload = array(
-                'iss' => $user->Name,
-                'sub' => $user->Email,
-                'createdBy' => $user->Created_by,
-                'role' => $user->Role,
+                'iss' => $user->name,
+                'sub' => $user->email,
+                'createdBy' => $user->createdBy,
+                'role' => $user->role,
                 'iat' => $nowTime,
                 'exp' => $nowTime + (60 * 60 * 24),
             );

@@ -20,9 +20,9 @@ class RegistrationController extends AuthController
         $email = strtolower($email);
 
         // try {
-        $user = User::where('Email', $email)->first();
+        $user = User::where('email', $email)->first();
         // dd($user->is_deleted);
-        if ($user && !($user->is_deleted)) {
+        if ($user && !($user->isDeleted)) {
             return response('This email has already been registered!', 422);
         } else {
             $createdBy = $request->email;
@@ -52,11 +52,11 @@ class RegistrationController extends AuthController
             if (gettype($payload) === "array") {
                 $user = new User();
                 $email = $payload['sub'];
-                $user->Name = strtoupper($request->username);
-                $user->Email = strtoupper($email);
-                $user->Role = strtoupper('Normal');
-                $user->Created_by = strtoupper($payload['createdBy']);
-                $user->Password = app('hash')->make($request->password);
+                $user->name = strtoupper($request->username);
+                $user->email = strtoupper($email);
+                $user->role = strtoupper('Normal');
+                $user->created_by = strtoupper($payload['createdBy']);
+                $user->password = app('hash')->make($request->password);
 
                 if ($user->save()) {
                     Mail::to($email)->send(new Email("", "Successfully Registered!", "emails.registered"));

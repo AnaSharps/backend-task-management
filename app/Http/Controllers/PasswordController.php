@@ -28,7 +28,7 @@ class PasswordController extends AuthController
         ]);
 
         $newjwt = (new GenerateJWT)->genjwt($payload);
-        if (User::where('Email', $email)->first()) {
+        if (User::where('email', $email)->first()) {
             Mail::to($email)->send(new Email($newjwt, "Reset Password", "emails.resetPass"));
         }
 
@@ -46,9 +46,9 @@ class PasswordController extends AuthController
         $payload = (new GenerateJWT)->decodejwt($token);
 
         $email = $payload['sub'];
-        $user = User::where('Email', $email)->first();
+        $user = User::where('email', $email)->first();
         if ($user) {
-            $user->Password = app('hash')->make($request->password);
+            $user->password = app('hash')->make($request->password);
 
             if ($user->save()) {
                 $email = strtolower($email);
@@ -69,13 +69,13 @@ class PasswordController extends AuthController
         $token = $request->bearerToken('token');
 
         $payload = (new GenerateJWT)->decodejwt($token);
-        $user = User::where('Email', $payload['sub'])->first();
+        $user = User::where('email', $payload['sub'])->first();
 
-        if ($user && app('hash')->check($request->password, $user->Password)) {
-            $user->Password = app('hash')->make($request->newPassword);
+        if ($user && app('hash')->check($request->password, $user->password)) {
+            $user->password = app('hash')->make($request->newPassword);
 
             $user->save();
-            $email = strtolower($user->Email);
+            $email = strtolower($user->email);
             Mail::to($email)->send(new Email("", "Password Changed", "emails.passChanged"));
 
             return response()->json(['status' => 'success', 'message' => 'Successfully changed password!']);

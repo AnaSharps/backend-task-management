@@ -40,26 +40,33 @@ class RegistrationController extends AuthController
             'token' => 'required|string',
             'username' => 'required|string|max: 50',
             'password' => 'required|string|min:8|max: 255|regex: ' . $this->passPattern,
+            'g-recaptcha-response' => 'required',
         ]);
 
-        $token = $request->token;
-        $payload = (new GenerateJWT)->decodejwt($token);
+        $response = $this->recaptcha->verify($request->input('g-recaptcha-response'), $_SERVER['REMOTE_ADDR']);
 
-        if (gettype($payload) === "array") {
-            $user = new User();
-            $email = $payload['sub'];
-            $user->Name = strtoupper($request->username);
-            $user->Email = strtoupper($email);
-            $user->Role = strtoupper('Normal');
-            $user->Created_by = strtoupper($payload['createdBy']);
-            $user->Password = app('hash')->make($request->password);
+        if ($response->isSuccess()) {
+            $token = $request->token;
+            $payload = (new GenerateJWT)->decodejwt($token);
 
-            if ($user->save()) {
-                Mail::to($email)->send(new Email("", "Successfully Registered!", "emails.registered"));
-                return response()->json(['status' => 'success', 'message' => 'Registered Successfully']);
+            if (gettype($payload) === "array") {
+                $user = new User();
+                $email = $payload['sub'];
+                $user->Name = strtoupper($request->username);
+                $user->Email = strtoupper($email);
+                $user->Role = strtoupper('Normal');
+                $user->Created_by = strtoupper($payload['createdBy']);
+                $user->Password = app('hash')->make($request->password);
+
+                if ($user->save()) {
+                    Mail::to($email)->send(new Email("", "Successfully Registered!", "emails.registered"));
+                    return response()->json(['status' => 'success', 'message' => 'Registered Successfully']);
+                }
+            } else {
+                return response()->json(['status' => 'failure', 'message' => 'token expired']);
             }
         } else {
-            return response()->json(['status' => 'failure', 'message' => 'token expired']);
+            return $response->getErrorCodes();
         }
     }
 }

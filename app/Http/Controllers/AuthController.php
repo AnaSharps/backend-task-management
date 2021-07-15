@@ -36,7 +36,13 @@ class AuthController extends Controller
 
         if (!empty($request->search)) {
             $term = "%" . $request->search . "%";
-            $users = DB::select(DB::raw("SELECT * FROM users WHERE is_deleted = false AND (Email like '$term' OR 'Name' like '$term' OR Created_by like '$term' OR Deleted_by like '$term')"));
+            $sql = "SELECT * FROM users WHERE is_deleted = :deleted AND (Email like :term OR 'Name' like :term2 OR Created_by like :term3)";
+            $users = DB::select($sql, [
+                'deleted' => false,
+                'term' => $term,
+                'term2' => $term,
+                'term3' => $term,
+            ]);
             return $users;
         } else {
             $users = DB::select('SELECT * FROM users WHERE is_deleted = false');

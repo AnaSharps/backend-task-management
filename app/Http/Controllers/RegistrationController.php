@@ -14,13 +14,24 @@ class RegistrationController extends AuthController
     public function registerSelf(Request $request)
     {
         $this->validate($request, [
-            'email' => 'required|email|max: 255|unique:users|regex: ' . $this->emailPattern,
+            'email' => 'required|email|max: 255|regex: ' . $this->emailPattern,
         ]);
-
         $email = $request->email;
-        $createdBy = $request->email;
+        $email = strtolower($email);
 
-        return (new RegisterUser)->register($email, $createdBy);
+        // try {
+        $user = User::where('Email', $email)->first();
+        // dd($user->is_deleted);
+        if ($user && !($user->is_deleted)) {
+            return response('This email has already been registered!', 422);
+        } else {
+            $createdBy = $request->email;
+
+            return (new RegisterUser)->register($email, $createdBy);
+        }
+        // } catch (\Exception $e) {
+        //     return response($e->getMessage(), 500);
+        // }
     }
 
     public function signup(Request $request)

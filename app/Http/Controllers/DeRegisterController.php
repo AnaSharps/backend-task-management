@@ -18,8 +18,14 @@ class DeRegisterController extends AuthController
 
             $user = User::where('Email', $email)->first();
 
-            if ($user->delete()) {
-                return response()->json(['status' => 'success', 'message' => 'Successfully dereggistered!']);
+            if ($user && !($user->is_deleted)) {
+                $user->is_deleted = true;
+                $user->Deleted_by = $email;
+                if ($user->save()) {
+                    return response()->json(['status' => 'success', 'message' => 'Successfully dereggistered!']);
+                }
+            } else {
+                return response()->json(['status' => 'failure', 'message' => 'No such user exists']);
             }
         }
     }

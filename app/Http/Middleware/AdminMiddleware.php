@@ -27,8 +27,8 @@ class AdminMiddleware
 
             if (gettype($decoded) === "array") {
                 $user = User::where('Email', $decoded['sub'])->first();
-                if ($user && $user->Role === "ADMIN") {
-                    $response = $next($request);
+                if ($user && $user->Role === "ADMIN" && !($user->is_deleted)) {
+                    // $response = $next($request);
 
                     // Post-Middleware Action
 

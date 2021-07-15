@@ -35,6 +35,7 @@ $router->post('/forgotPass', 'PasswordController@forgotPass');
 
 // Admin Routes
 $router->post('admin/addUser', ['middleware' => 'admin', 'uses' => 'AdminController@addUser']);
+$router->post('admin/deleteUser', ['middleware' => 'admin', 'uses' => 'AdminController@deleteUser']);
 
 // Authenticated Routes
 $router->group(['prefix' => 'api', 'middleware' => 'auth'],  function () use ($router) {

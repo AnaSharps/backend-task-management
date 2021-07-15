@@ -17,7 +17,7 @@ class LoginController extends AuthController
 
         $user = User::where('Email', strtoupper($request->email))->first();
 
-        if ($user && app('hash')->check($request->password, $user['Password'])) {
+        if ($user && !($user->is_deleted) && app('hash')->check($request->password, $user['Password'])) {
             $nowTime = time();
             $payload = array(
                 'iss' => $user->Name,

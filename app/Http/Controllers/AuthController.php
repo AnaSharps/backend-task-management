@@ -29,6 +29,6 @@ class AuthController extends Controller
 
     public function getUsers()
     { //pagination
-        return User::all();
+        return User::where('is_deleted', false);
     }
 }

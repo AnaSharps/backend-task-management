@@ -21,11 +21,13 @@ class AuthController extends Controller
 {
     protected $passPattern;
     protected $emailPattern;
+    protected $recaptcha;
 
     public function __construct()
     {
         $this->passPattern = env("PASSWORD_FORMAT");
         $this->emailPattern = env("EMAIL_FORMAT");
+        $this->recaptcha = new \ReCaptcha\ReCaptcha(env('RECAPTCHA_SECRET_KEY'));
     }
 
     public function getUsers(Request $request)

@@ -15,9 +15,9 @@ class LoginController extends AuthController
             'password' => 'required|max: 255|string',
         ]);
 
-        $user = User::where('email', strtoupper($request->email))->first();
+        $user = User::where([['email', strtoupper($request->email)], ['isDeleted', false]])->first();
 
-        if ($user && !($user->isDeleted) && app('hash')->check($request->password, $user['Password'])) {
+        if ($user && !($user->isDeleted) && app('hash')->check($request->password, $user->password)) {
             $nowTime = time();
             $payload = array(
                 'iss' => $user->name,

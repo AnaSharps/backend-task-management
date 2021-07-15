@@ -16,7 +16,7 @@ class DeRegisterController extends AuthController
             $payload = (new GenerateJWT)->decodejwt($token);
             $email = $payload['sub'];
 
-            $user = User::where('email', $email)->first();
+            $user = User::where([['email', $email], ['isDeleted', false]])->first();
 
             if ($user && !($user->isDeleted)) {
                 $user->isDeleted = true;

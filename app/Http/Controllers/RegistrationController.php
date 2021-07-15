@@ -20,7 +20,7 @@ class RegistrationController extends AuthController
         $email = strtolower($email);
 
         // try {
-        $user = User::where('email', $email)->first();
+        $user = User::where([['email', $email], ['isDeleted', false]])->first();
         // dd($user->is_deleted);
         if ($user && !($user->isDeleted)) {
             return response('This email has already been registered!', 422);
@@ -40,33 +40,39 @@ class RegistrationController extends AuthController
             'token' => 'required|string',
             'username' => 'required|string|max: 50',
             'password' => 'required|string|min:8|max: 255|regex: ' . $this->passPattern,
-            'g-recaptcha-response' => 'required',
+            // 'g-recaptcha-response' => 'required',
         ]);
 
-        $response = $this->recaptcha->verify($request->input('g-recaptcha-response'), $_SERVER['REMOTE_ADDR']);
+        // $response = $this->recaptcha->verify($request->input('g-recaptcha-response'), $_SERVER['REMOTE_ADDR']);
 
-        if ($response->isSuccess()) {
-            $token = $request->token;
-            $payload = (new GenerateJWT)->decodejwt($token);
+        // if ($response->isSuccess()) {
+        $token = $request->token;
+        $payload = (new GenerateJWT)->decodejwt($token);
 
-            if (gettype($payload) === "array") {
+        if (gettype($payload) === "array") {
+            $email = $payload['sub'];
+
+            $currUser = User::where([['email', $email], ['isDeleted', false]])->first();
+            if ($currUser && !($currUser->isDeleted)) {
+                return response('User already exists!', 400);
+            } else {
                 $user = new User();
-                $email = $payload['sub'];
                 $user->name = strtoupper($request->username);
                 $user->email = strtoupper($email);
                 $user->role = strtoupper('Normal');
-                $user->created_by = strtoupper($payload['createdBy']);
+                $user->createdBy = strtoupper($payload['createdBy']);
                 $user->password = app('hash')->make($request->password);
 
                 if ($user->save()) {
                     Mail::to($email)->send(new Email("", "Successfully Registered!", "emails.registered"));
                     return response()->json(['status' => 'success', 'message' => 'Registered Successfully']);
                 }
-            } else {
-                return response()->json(['status' => 'failure', 'message' => 'token expired']);
             }
         } else {
-            return $response->getErrorCodes();
+            return response()->json(['status' => 'failure', 'message' => 'token expired']);
         }
+        // } else {
+        //     return $response->getErrorCodes();
+        // }
     }
 }

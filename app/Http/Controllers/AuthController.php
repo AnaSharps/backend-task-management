@@ -29,26 +29,36 @@ class AuthController extends Controller
     }
 
     public function getUsers(Request $request)
-    { //pagination
+    {
         $this->validate($request, [
             'search' => 'string|max: 255',
+            'display' => 'required|int',
+            'ofset' => 'required|int',
+            'deleted' => 'required|boolean'
         ]);
 
         if (!empty($request->search)) {
             $term = "%" . $request->search . "%";
-            $sql = "SELECT * FROM users WHERE is_deleted = :deleted AND (Email like :term OR 'Name' like :term2 OR Created_by like :term3)";
+            $sql = "SELECT * FROM users WHERE is_deleted = :deleted AND (Email like :term OR 'Name' like :term2 OR Created_by like :term3 OR Deleted_by like :term4) LIMIT :display OFFSET :ofset";
             $users = DB::select($sql, [
-                'deleted' => false,
+                'deleted' => $request->deleted,
                 'term' => $term,
                 'term2' => $term,
                 'term3' => $term,
+                'term4' => $term,
+                'display' => $request->display,
+                'ofset' => $request->ofset,
+
             ]);
             return $users;
         } else {
-            $users = DB::select('SELECT * FROM users WHERE is_deleted = false');
+            $sql = 'SELECT * FROM users WHERE is_deleted = :deleted LIMIT :display OFFSET :ofset';
+            $users = DB::select($sql, [
+                'deleted' => $request->deleted,
+                'display' => $request->display,
+                'ofset' => $request->ofset,
+            ]);
             return $users;
         }
-
-        // $users = (array) $users;
     }
 }

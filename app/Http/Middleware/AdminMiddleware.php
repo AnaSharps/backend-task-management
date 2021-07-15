@@ -26,8 +26,8 @@ class AdminMiddleware
             $decoded = (new GenerateJWT)->decodejwt($jwt);
 
             if (gettype($decoded) === "array") {
-                $user = User::where('Email', $decoded['sub'])->first();
-                if ($user && $user->Role === "ADMIN" && !($user->is_deleted)) {
+                $user = User::where([['email', $decoded['sub']], ['isDeleted', false]])->first();
+                if ($user && $user->role === "ADMIN" && !($user->isDeleted)) {
                     // $response = $next($request);
 
                     // Post-Middleware Action

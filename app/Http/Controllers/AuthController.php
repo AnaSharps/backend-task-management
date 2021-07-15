@@ -41,7 +41,7 @@ class AuthController extends Controller
 
         if (!empty($request->search)) {
             $term = "%" . $request->search . "%";
-            $sql = "SELECT * FROM users WHERE is_deleted = :deleted AND (Email like :term OR 'Name' like :term2 OR Created_by like :term3 OR Deleted_by like :term4) LIMIT :display OFFSET :ofset";
+            $sql = "SELECT * FROM users WHERE isDeleted = :deleted AND (email like :term OR 'name' like :term2 OR createdBy like :term3 OR deletedBy like :term4) LIMIT :display OFFSET :ofset";
             $users = DB::select($sql, [
                 'deleted' => $request->deleted,
                 'term' => $term,
@@ -54,7 +54,7 @@ class AuthController extends Controller
             ]);
             return $users;
         } else {
-            $sql = 'SELECT * FROM users WHERE is_deleted = :deleted LIMIT :display OFFSET :ofset';
+            $sql = 'SELECT * FROM users WHERE isDeleted = :deleted LIMIT :display OFFSET :ofset';
             $users = DB::select($sql, [
                 'deleted' => $request->deleted,
                 'display' => $request->display,

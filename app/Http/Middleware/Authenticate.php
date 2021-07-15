@@ -45,7 +45,7 @@ class Authenticate
             $decoded = (new GenerateJWT)->decodejwt($jwt);
 
             if (gettype($decoded) === "array") {
-                $user = User::where('Email', $decoded['sub'])->first();
+                $user = User::where([['email', $decoded['sub']], ['isDeleted', false]])->first();
                 if ($user) {
                     return $next($request);
                 } else {

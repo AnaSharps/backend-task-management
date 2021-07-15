@@ -18,14 +18,13 @@ class AdminController extends AuthController
         ]);
 
         $email = $request->email;
-        $user = User::where('Email', $email)->first();
-        if ($user && !($user->is_deleted)) {
+        $user = User::where([['email', $email], ['isDeleted', false]])->first();
+        if ($user && !($user->isDeleted)) {
             return response('This email has already been registered!', 422);
         }
         $token = $request->bearerToken('token');
         $payload = (new GenerateJWT)->decodejwt($token);
 
-        $email = $request->email;
         $createdBy = $payload['sub'];
 
         return (new RegisterUser)->register($email, $createdBy);
@@ -43,11 +42,11 @@ class AdminController extends AuthController
             $email = $request->email;
             $adminEmail = $payload['sub'];
 
-            $user = User::where('Email', $email)->first();
+            $user = User::where([['email', $email], ['isDeleted', false]])->first();
 
-            if ($user && !($user->is_deleted)) {
-                $user->is_deleted = true;
-                $user->Deleted_by = $adminEmail;
+            if ($user && !($user->isDeleted)) {
+                $user->isDeleted = true;
+                $user->deletedBy = $adminEmail;
                 if ($user->save()) {
                     return response()->json(['status' => 'success', 'message' => 'Successfully deletd user!']);
                 }

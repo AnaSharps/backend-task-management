@@ -39,7 +39,7 @@ $router->post('admin/deleteUser', ['middleware' => 'admin', 'uses' => 'AdminCont
 
 // Authenticated Routes
 $router->group(['prefix' => 'api', 'middleware' => 'auth'],  function () use ($router) {
-    $router->get('/allUsers', 'AuthController@getUsers');
+    $router->post('/allUsers', 'AuthController@getUsers');
     $router->post('/resetPass', 'PasswordController@resetPass');
     $router->delete('deleteSelf', 'DeRegisterController@deRegister');
     $router->post('/changePassword', 'PasswordController@changePassword');

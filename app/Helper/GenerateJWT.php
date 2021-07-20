@@ -37,7 +37,7 @@ class GenerateJWT
                 return $decoded_array;
             } catch (\Exception $e) {
                 return $e->getMessage();
-            }
+            } //expire exception
         }
     }
 }

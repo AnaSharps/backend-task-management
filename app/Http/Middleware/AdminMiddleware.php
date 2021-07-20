@@ -23,13 +23,12 @@ class AdminMiddleware
 
             $jwt = $request->bearerToken('token');
 
-            $decoded = (new GenerateJWT)->decodejwt($jwt);
+            $decoded = (new GenerateJWT)->decodejwt($jwt); //expire exception
 
             if (gettype($decoded) === "array") {
-                $user = User::where([['email', $decoded['sub']], ['isDeleted', false]])->first();
+                $user = User::where(['email' => $decoded['sub'], 'isDeleted' => false])->first();
                 if ($user && $user->role === "ADMIN" && !($user->isDeleted)) {
                     // $response = $next($request);
-
                     // Post-Middleware Action
 
                     return $next($request);

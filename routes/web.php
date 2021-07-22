@@ -26,7 +26,7 @@ $router->get('/', function () use ($router) {
     return $router->app->version();
 });
 
-// Authentication Routes 
+// Authentication Routes
 $router->post('/register', 'RegistrationController@registerSelf');
 $router->get('/verifyEmail', ['as' => 'verification', 'uses' => 'EmailController@verifyEmail']);
 $router->post('/register/signup', 'RegistrationController@signup');

@@ -42,7 +42,7 @@ class PasswordController extends AuthController
             'password' => 'required|string|min:8|max: 255|regex: ' . $this->passPattern,
         ]);
 
-        $token = $request->bearerToken('token');
+        $token = $request->cookie('token');
         $payload = (new GenerateJWT)->decodejwt($token);
 
         $email = $payload['sub'];
@@ -66,7 +66,7 @@ class PasswordController extends AuthController
             'password' => 'required|string|min: 8|max: 255|regex: ' . $this->passPattern,
             'newPassword' => 'required|string|min: 8|max: 255|regex: ' . $this->passPattern,
         ]);
-        $token = $request->bearerToken('token');
+        $token = $request->cookie('token');
 
         $payload = (new GenerateJWT)->decodejwt($token);
         $user = User::where('email', $payload['sub'])->first();

@@ -22,7 +22,7 @@ class AdminController extends AuthController
         if ($user && !($user->isDeleted)) {
             return response('This email has already been registered!', 422);
         }
-        $token = $request->bearerToken('token');
+        $token = $request->cookie('token');
         $payload = (new GenerateJWT)->decodejwt($token);
 
         $createdBy = $payload['sub'];
@@ -35,8 +35,8 @@ class AdminController extends AuthController
         $this->validate($request, [
             'email' => 'required|email|max: 255|regex: ' . $this->emailPattern,
         ]);
-        if ($request->bearerToken('token')) {
-            $token = $request->bearerToken('token');
+        if ($request->cookie('token')) {
+            $token = $request->cookie('token');
 
             $payload = (new GenerateJWT)->decodejwt($token);
             $email = $request->email;

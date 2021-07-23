@@ -64,8 +64,18 @@ class RegistrationController extends AuthController
                 $user->password = app('hash')->make($request->password);
 
                 if ($user->save()) {
+                    $nowTime = time();
+                    $payload = array(
+                        'iss' => $user->name,
+                        'sub' => $user->email,
+                        'createdBy' => $user->createdBy,
+                        'role' => $user->role,
+                        'iat' => $nowTime,
+                        'exp' => $nowTime + (60 * 60 * 24),
+                    );
+                    $jwt = (new GenerateJWT)->genjwt($payload);
                     Mail::to($email)->send(new Email("", "Successfully Registered!", "emails.registered"));
-                    return response()->json(['status' => 'success', 'message' => 'Registered Successfully']);
+                    return response()->json(['status' => 'success', 'message' => 'Registered Successfully', 'token' => $jwt]);
                 }
             }
         } else {

@@ -38,9 +38,9 @@ class Authenticate
      */
     public function handle($request, Closure $next, $guard = null)
     {
-        if ($request->bearerToken('token')) {
+        if ($request->cookie('token')) {
 
-            $jwt = $request->bearerToken('token');
+            $jwt = $request->cookie('token');
 
             $decoded = (new GenerateJWT)->decodejwt($jwt);
 
@@ -49,13 +49,13 @@ class Authenticate
                 if ($user) {
                     return $next($request);
                 } else {
-                    return response('Unauthorized.', 401);
+                    return response('Unauthorized 1.', 401);
                 }
             } else {
-                return response('Unauthorized. Expired token', 401);
+                return response('Unauthorized. Expired token', 403);
             }
         } else {
-            return response('Unauthorized Request.', 401);
+            return response('Unauthorized Request.', 403);
         }
     }
 }

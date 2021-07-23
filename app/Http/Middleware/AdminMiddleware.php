@@ -19,9 +19,9 @@ class AdminMiddleware
     public function handle($request, Closure $next)
     {
         // Pre-Middleware Action
-        if ($request->bearerToken('token')) {
+        if ($request->cookie('token')) {
 
-            $jwt = $request->bearerToken('token');
+            $jwt = $request->cookie('token');
 
             $decoded = (new GenerateJWT)->decodejwt($jwt);
 

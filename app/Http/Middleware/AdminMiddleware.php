@@ -23,24 +23,23 @@ class AdminMiddleware
 
             $jwt = $request->cookie('token');
 
-            $decoded = (new GenerateJWT)->decodejwt($jwt);
+            $decoded = (new GenerateJWT)->decodejwt($jwt); //expire exception
 
             if (gettype($decoded) === "array") {
-                $user = User::where([['email', $decoded['sub']], ['isDeleted', false]])->first();
+                $user = User::where(['email' => $decoded['sub'], 'isDeleted' => false])->first();
                 if ($user && $user->role === "ADMIN" && !($user->isDeleted)) {
                     // $response = $next($request);
-
                     // Post-Middleware Action
 
                     return $next($request);
                 } else {
-                    return response('Unauthorized.', 401);
+                    return response('Unauthorized.', 403);
                 }
             } else {
-                return response('Unauthorized. Expired token', 401);
+                return response('Unauthorized. Expired token', 403);
             }
         } else {
-            return response('Unauthorized Request.', 401);
+            return response('Unauthorized Request.', 403);
         }
     }
 }

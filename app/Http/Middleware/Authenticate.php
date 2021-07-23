@@ -49,7 +49,7 @@ class Authenticate
                 if ($user) {
                     return $next($request);
                 } else {
-                    return response('Unauthorized 1.', 401);
+                    return response('Unauthorized.', 403);
                 }
             } else {
                 return response('Unauthorized. Expired token', 403);

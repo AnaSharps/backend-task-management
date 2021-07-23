@@ -19,6 +19,7 @@ class AdminController extends AuthController
 
         $email = $request->email;
         $user = User::where([['email', $email], ['isDeleted', false]])->first();
+
         if ($user && !($user->isDeleted)) {
             return response('This email has already been registered!', 422);
         }
@@ -54,7 +55,7 @@ class AdminController extends AuthController
                 return response('No such user exists', 400);
             }
         } else {
-            return response('Unauthorized Request', 401);
+            return response('Unauthorized Request', 403);
         }
     }
 }

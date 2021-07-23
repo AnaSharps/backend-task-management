@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Helper\GenerateJWT;
+use Symfony\Component\HttpFoundation\Cookie;
 
 class LoginController extends AuthController
 {
@@ -29,9 +30,9 @@ class LoginController extends AuthController
             );
             $jwt = (new GenerateJWT)->genjwt($payload);
 
-            return response()->json(['status' => 'success', 'message' => 'Successfully Logged in!', 'token' => $jwt]);
+            return response()->json(['status' => 'success', 'message' => 'Successfully Logged in!'])->withCookie(new Cookie('token', $jwt));
         } else {
-            return response()->json(['status' => 'failure', 'message' => 'Invalid credentials']);
+            return response('Wrong Credentials', 401);
         }
     }
 }

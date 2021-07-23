@@ -27,7 +27,7 @@ class Email extends Mailable
         $this->view = $view;
         switch ($this->subject) {
             case "Email Verification":
-                $this->url = "http://localhost:8000/verifyEmail/?token=" . $token;
+                $this->url = "http://localhost:3000/verifyEmail/?token=" . $token;
                 break;
             case "Password Changed":
                 $this->url = "";

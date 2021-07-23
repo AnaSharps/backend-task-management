@@ -38,9 +38,9 @@ class Authenticate
      */
     public function handle($request, Closure $next, $guard = null)
     {
-        if ($request->bearerToken('token')) {
+        if ($request->cookie('token')) {
 
-            $jwt = $request->bearerToken('token');
+            $jwt = $request->cookie('token');
 
             $decoded = (new GenerateJWT)->decodejwt($jwt);
 

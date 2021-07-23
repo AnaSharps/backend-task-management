@@ -10,8 +10,8 @@ class DeRegisterController extends AuthController
 {
     public function deRegister(Request $request)
     {
-        if ($request->bearerToken('token')) {
-            $token = $request->bearerToken('token');
+        if ($request->cookie('token')) {
+            $token = $request->cookie('token');
 
             $payload = (new GenerateJWT)->decodejwt($token);
             $email = $payload['sub'];

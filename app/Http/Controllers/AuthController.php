@@ -30,6 +30,11 @@ class AuthController extends Controller
         $this->recaptcha = new \ReCaptcha\ReCaptcha(env('RECAPTCHA_SECRET_KEY'));
     }
 
+    public function redirect() {
+
+        return response()->json(['status' => 'success']);
+    }
+
     public function getUsers(Request $request)
     {
         $this->validate($request, [
@@ -58,7 +63,16 @@ class AuthController extends Controller
                 'ofset' => $request->ofset,
 
             ]);
-            return response()->json(['users' => $users, 'admin' => $admin]);
+            $sql2 = "SELECT id, name, email, createdBy, deletedBy, isDeleted, created_at, updated_at FROM users WHERE isDeleted = :deleted AND (email like :term OR 'name' like :term2 OR createdBy like :term3 OR deletedBy like :term4)";
+            $count = DB::select($sql2, [
+                'deleted' => $request->deleted,
+                'term' => $term,
+                'term2' => $term,
+                'term3' => $term,
+                'term4' => $term,
+            ]);
+            $count = count($count);
+            return response()->json(['users' => $users, 'admin' => $admin, 'totalCount' => $count]);
         } else {
             $sql = "SELECT id, name, email, createdBy, deletedBy, isDeleted, created_at, updated_at FROM users WHERE isDeleted = :deleted LIMIT :display OFFSET :ofset";
             $users = DB::select($sql, [
@@ -66,7 +80,9 @@ class AuthController extends Controller
                 'display' => $request->display,
                 'ofset' => $request->ofset,
             ]);
-            return response()->json(['users' => $users, 'admin' => $admin]);
+            $count = User::where('isDeleted', false)->get();
+            $count = count($count);
+            return response()->json(['users' => $users, 'admin' => $admin, 'totalCount' => $count]);
         }
     }
 }

@@ -10,6 +10,10 @@ use App\Helper\RegisterUser;
 class AdminController extends AuthController
 {
 
+    // public function AdminRedirect() {
+    //     return response()->json(['status' => 'success']);
+    // }
+    
     public function addUser(Request $request)
     {
         //after admin validation through provider

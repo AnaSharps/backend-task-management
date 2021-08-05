@@ -27,6 +27,6 @@ class RegisterUser
         $subject = "Email Verification";
         $view = "emails.verificationEmail";
         Mail::to($email)->send(new Email($newjwt, $subject, $view));
-        return response()->json(['status' => "success", "message" => "Email Verification link has been sent to your email address. Please Click the link to complete your registration!", 'token' => $newjwt]);
+        return response()->json(['status' => "success", "message" => "Email Verification link has been sent to your email address. Please Click the link to complete your registration!"]);
     }
 }

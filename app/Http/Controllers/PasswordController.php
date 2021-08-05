@@ -7,6 +7,7 @@ use App\Helper\GenerateJWT;
 use App\Models\User;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\Email;
+use Exception;
 
 class PasswordController extends AuthController
 {
@@ -39,25 +40,31 @@ class PasswordController extends AuthController
     public function resetPass(Request $request)
     {
         $this->validate($request, [
+            'token' => 'required',
             'password' => 'required|string|min:8|max: 255|regex: ' . $this->passPattern,
         ]);
 
-        $token = $request->cookie('token');
+        $token = $request->token;
         $payload = (new GenerateJWT)->decodejwt($token);
-
-        $email = $payload['sub'];
-        $user = User::where('email', $email)->first();
-        if ($user) {
-            $user->password = app('hash')->make($request->password);
-
-            if ($user->save()) {
-                $email = strtolower($email);
-                Mail::to($email)->send(new Email("", "Password Changed", "emails.passChanged"));
-                return response()->json(['status' => 'success', 'message' => 'Successfully changed password!']);
+        // try {
+            if (gettype($payload) === "array") {
+                $email = $payload[0]->sub;
+                $user = User::where('email', $email)->first();
+                if ($user) {
+                    $user->password = app('hash')->make($request->password);
+                
+                    if ($user->save()) {
+                        $email = strtolower($email);
+                        Mail::to($email)->send(new Email("", "Password Changed", "emails.passChanged"));
+                        return response()->json(['status' => 'success', 'message' => 'Successfully changed password!']);
+                    }
+                }
+            } else {
+                return response("Token Expired", 403);
             }
-        } else {
-            return response()->json(['status' => 'failure', 'message' => 'Token expired!']);
-        }
+        // } catch (Exception $e) {
+        //     return response($e->getMessage(), 500);
+        // }
     }
 
     public function changePassword(Request $request)

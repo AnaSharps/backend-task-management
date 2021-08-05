@@ -23,7 +23,7 @@ class RegistrationController extends AuthController
         $user = User::where([['email', $email], ['isDeleted', false]])->first();
         // dd($user->is_deleted);
         if ($user && !($user->isDeleted)) {
-            return response('This email has already been registered!', 422);
+            return response('This email has already been registered!', 400);
         } else {
             $createdBy = $request->email;
 

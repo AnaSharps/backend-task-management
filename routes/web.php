@@ -32,15 +32,20 @@ $router->get('/verifyEmail', ['as' => 'verification', 'uses' => 'EmailController
 $router->post('/register/signup', 'RegistrationController@signup');
 $router->post('/login', 'LoginController@login');
 $router->post('/forgotPass', 'PasswordController@forgotPass');
+$router->post('/resetPass', 'PasswordController@resetPass');
 
 // Admin Routes
-$router->post('admin/addUser', ['middleware' => 'admin', 'uses' => 'AdminController@addUser']);
-$router->post('admin/deleteUser', ['middleware' => 'admin', 'uses' => 'AdminController@deleteUser']);
+$router->group(['prefix' => 'admin', 'middleware' => 'admin'], function () use ($router) {
+    $router->get('/', 'AuthController@redirect');
+    $router->post('/addUser', 'AdminController@addUser');
+    $router->post('/deleteUser', 'AdminController@deleteUser');
+});
 
 // Authenticated Routes
 $router->group(['prefix' => 'api', 'middleware' => 'auth'],  function () use ($router) {
+    $router->get('/', 'AuthController@redirect');
     $router->post('/allUsers', 'AuthController@getUsers');
-    $router->post('/resetPass', 'PasswordController@resetPass');
     $router->delete('deleteSelf', 'DeRegisterController@deRegister');
     $router->post('/changePassword', 'PasswordController@changePassword');
+    $router->get('/logout', 'LoginController@logout');
 });

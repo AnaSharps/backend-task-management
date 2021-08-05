@@ -30,7 +30,7 @@ class LoginController extends AuthController
             );
             $jwt = (new GenerateJWT)->genjwt($payload);
 
-            return response()->json(['status' => 'success', 'message' => 'Successfully Logged in!', 'admin' => $user->role === "ADMIN"])->withCookie(new Cookie('token', $jwt));
+            return response()->json(['status' => 'success', 'message' => 'Successfully Logged in!', 'admin' => $user->role === "ADMIN", 'token' => $jwt])->withCookie(new Cookie('token', $jwt));
         } else {
             return response('Wrong Credentials', 401);
         }

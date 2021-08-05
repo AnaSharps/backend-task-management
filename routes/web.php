@@ -48,4 +48,10 @@ $router->group(['prefix' => 'api', 'middleware' => 'auth'],  function () use ($r
     $router->delete('deleteSelf', 'DeRegisterController@deRegister');
     $router->post('/changePassword', 'PasswordController@changePassword');
     $router->get('/logout', 'LoginController@logout');
+
+    ///////////////////////////////////////////////////////////////////////////////
+    $router->post('/createTask', 'TaskController@createTask');
+    $router->get('/getTasks', 'TaskController@getTasks');
+    $router->put('/updateTaskStatus', 'TaskController@updateStatus');
+    $router->delete('/deleteTask', 'TaskController@deleteTask');
 });

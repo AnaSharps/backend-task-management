@@ -38,6 +38,9 @@ class Email extends Mailable
             case "Reset Password":
                 $this->url = "http://localhost:3000/resetPass/?token=" . $token;
                 break;
+            case "New Task Assigned!":
+                $this->url = "";
+                break;
         }
     }
 

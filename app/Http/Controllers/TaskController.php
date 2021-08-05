@@ -42,6 +42,13 @@ class TaskController extends AuthController
         return response()->json(['tasks' => $tasks, 'totalCount' => $count]);
     }
 
+    public function viewTask($id)
+    {
+        $task = Task::findorFail($id);
+
+        return $task;
+    }
+
     public function updateStatus(Request $request)
     {
         $this->validate($request, [

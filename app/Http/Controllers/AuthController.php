@@ -21,12 +21,14 @@ class AuthController extends Controller
 {
     protected $passPattern;
     protected $emailPattern;
+    protected $taskStatusPattern;
     protected $recaptcha;
 
     public function __construct()
     {
         $this->passPattern = env("PASSWORD_FORMAT");
         $this->emailPattern = env("EMAIL_FORMAT");
+        $this->taskStatusPattern = env("TASK_STATUS_FORMAT");
         $this->recaptcha = new \ReCaptcha\ReCaptcha(env('RECAPTCHA_SECRET_KEY'));
     }
 

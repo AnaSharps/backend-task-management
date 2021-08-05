@@ -10,14 +10,46 @@ use Exception;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\Email;
 
-class TaskController extends Controller
+class TaskController extends AuthController
 {
     public function getTasks() {
         return Task::all();
     }
 
     public function updateStatus(Request $request) {
+        $this->validate($request, [
+            'id' => 'required|int',
+            'status' => 'required|string',
+        ]);
+        
+        // try {
+        $id = $request->id;
+        $status = $request->status;
+        $token = $request->bearerToken('token');
+        $payload = (new GenerateJWT)->decodejwt($token);
+        
+        $task = Task::findorFail($id);
+        if (gettype($payload) === 'array') {
+                $user = strtolower($payload['sub']);
+                // if (!$task) return response("no such task exists", 400);
 
+                if ($task->assignee !== $user && $task->assignor !== $user) {
+                    return response("Unauthorised Request", 403);
+                }
+
+                $task->status = $status;
+                if ($task->save()) {
+                    $subject = "Task Status Updated";
+                    $view = "emails.taskStatusUpdated";
+                    Mail::to([$task->assignee, $task->assignor])->send(new Email("", $subject, $view));
+                    return response()->json(['status' => "Task created Successfully", 'task' => $task]);
+                }
+                return response("some error occured", 500);
+            }
+            return response("Expired token", 403);
+        // } catch (Exception $e) {
+        //     return response($e->getMessage(), 500);
+        // }
     }
 
     public function deleteTask(Request $request) {
@@ -38,6 +70,9 @@ class TaskController extends Controller
                     return response("Unauthorised request", 403);
                 }
                 if ($task->delete()) {
+                    $subject = "Task Deleted";
+                    $view = "emails.deletedTask";
+                    Mail::to([$task->assignee, $task->assignor])->send(new Email("", $subject, $view));
                     return response()->json(['status' => 'Successfully deleted!']);
                 }
                 return response("some error occured!", 500);
@@ -53,7 +88,7 @@ class TaskController extends Controller
             'name' => 'required|string|max:255',
             'desc' => 'required|string|max:255',
             'dueDate' => 'required|int|max:255',
-            'assignee' => 'required|string|max:255',
+            'assignee' => 'required|string|max:255|regex: '+ $this->emailPattern,
         ]);
 
         $name = strtolower($request->name);
@@ -89,7 +124,7 @@ class TaskController extends Controller
                 if ($task->save()) {
                     $subject = "New Task Assigned!";
                     $view = "emails.newTaskAssigned";
-                    Mail::to($assignee)->send(new Email("", $subject, $view));
+                    Mail::to([$assignee, $assignor])->send(new Email("", $subject, $view));
                     return response()->json(['status' => "Task created Successfully", 'task' => $task]);
                 }
                 return response("some error occured", 500);

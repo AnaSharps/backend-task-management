@@ -19,7 +19,7 @@ class TaskController extends AuthController
             'searchKeywords' => 'string|max: 255',
             'searchAssignee' => 'string|max: 255',
             'searchAssignor' => 'string|max: 255',
-            // 'searchDueDate' => 'date_format: Y-m-d|max: 255',
+            'searchDueDate' => 'date_format:Y-m-d',
             'display' => 'required|int',
             'ofset' => 'required|int',
         ]);
@@ -27,13 +27,14 @@ class TaskController extends AuthController
         $keywords = "%" . $request->searchKeywords . "%";
         $assignee = "%" . $request->searchAssignee . "%";
         $assignor = "%" . $request->searchAssignor . "%";
-        // $dueDate = "%" . $request->searchDueDate . "%";
+        $dueDate = "%" . $request->searchDueDate . "%";
 
-        $tasks = Task::where(function ($query) use ($keywords, $assignor, $assignee) {
+        $tasks = Task::where(function ($query) use ($keywords) {
             $query->where('taskName', 'like', $keywords)
                 ->orWhere('taskDesc', 'like', $keywords);
         })
             ->where('assignee', 'like', $assignee)
+            ->where('dueDate', 'like', $dueDate)
             ->where('assignor', 'like', $assignor);
 
         $count = $tasks->count();

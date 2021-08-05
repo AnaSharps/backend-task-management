@@ -51,7 +51,7 @@ $router->group(['prefix' => 'api', 'middleware' => 'auth'],  function () use ($r
 
     ///////////////////////////////////////////////////////////////////////////////
     $router->post('/createTask', 'TaskController@createTask');
-    $router->get('/getTasks', 'TaskController@getTasks');
+    $router->post('/getTasks', 'TaskController@getTasks');
     $router->put('/updateTaskStatus', 'TaskController@updateStatus');
     $router->delete('/deleteTask', 'TaskController@deleteTask');
 });

@@ -2,10 +2,12 @@
 
 namespace App\Mail;
 
+use Faker\Core\Number;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
+use Ramsey\Uuid\Type\Integer;
 
 class Email extends Mailable
 {
@@ -19,8 +21,10 @@ class Email extends Mailable
     public $url;
     public $subject;
     public $view;
+    public $tasks;
+    public $taskCount;
 
-    public function __construct(String $token, String $subject, String $view)
+    public function __construct(String $token, String $subject, String $view, $tasks = null, $count = null)
     {
         // $this->url = $url;
         $this->subject = $subject;
@@ -41,6 +45,11 @@ class Email extends Mailable
             case "New Task Assigned!":
                 $this->url = "";
                 break;
+            case "Daily Task Reminder":
+                print_r($count);
+                $this->tasks = $tasks;
+                $this->taskCount = $count;
+                break;
         }
     }
 
@@ -52,6 +61,11 @@ class Email extends Mailable
     public function build()
     {
         // print_r($this->url);
+        // print_r($this->url);
+        print_r($this->subject);
+        print_r($this->view);
+        // print_r($this->tasks);
+        // print_r($this->count);
         return $this->subject($this->subject)->view($this->view);
     }
 }

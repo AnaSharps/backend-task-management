@@ -2,8 +2,12 @@
 
 namespace App\Console;
 
+use App\Jobs\DailyReminder;
 use Illuminate\Console\Scheduling\Schedule;
 use Laravel\Lumen\Console\Kernel as ConsoleKernel;
+use App\Models\Task;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\Email;
 
 class Kernel extends ConsoleKernel
 {
@@ -24,6 +28,6 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        //
+        $schedule->job(new DailyReminder)->everyMinute();
     }
 }

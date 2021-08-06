@@ -139,7 +139,6 @@ class TaskController extends AuthController
         }
 
         $token = $request->cookie('token');
-        // $token = $request->bearerToken('token');
         $payload = (new GenerateJWT)->decodejwt($token);
 
         if (gettype($payload) === "array") {

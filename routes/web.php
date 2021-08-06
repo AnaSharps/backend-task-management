@@ -56,4 +56,6 @@ $router->group(['prefix' => 'api', 'middleware' => 'auth'],  function () use ($r
     $router->delete('/deleteTask', 'TaskController@deleteTask');
     $router->post('/viewTask/{id}', 'TaskController@viewTask');
     $router->get('/myStats', 'DashboardController@myStats');
+    $router->get('/todaysTasks', 'DashboardController@tasksForToday');
+    $router->get('/myTasks', 'DashboardController@myTasks');
 });

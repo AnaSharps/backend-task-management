@@ -46,7 +46,6 @@ class Email extends Mailable
                 $this->url = "";
                 break;
             case "Daily Task Reminder":
-                print_r($count);
                 $this->tasks = $tasks;
                 $this->taskCount = $count;
                 break;
@@ -60,12 +59,6 @@ class Email extends Mailable
      */
     public function build()
     {
-        // print_r($this->url);
-        // print_r($this->url);
-        print_r($this->subject);
-        print_r($this->view);
-        // print_r($this->tasks);
-        // print_r($this->count);
         return $this->subject($this->subject)->view($this->view);
     }
 }

@@ -28,7 +28,7 @@ class DailyReminder extends Job implements ShouldBeUnique
      */
     public function handle()
     {
-        $assigneesTask = Task::where('status', 'inprogress')->orWhere('status', 'pending')->distinct('assignee')->get();
+        $assigneesTask = Task::where('status', 'inprogress')->orWhere('status', 'pending')->get()->unique('assignee');
         $jobs = array();
 
         foreach ($assigneesTask as $assigneeTask) {

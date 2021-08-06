@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Helper\GenerateJWT;
+use App\Jobs\SendEmail;
 use App\Models\Task;
 use App\Models\User;
 use Exception;
@@ -59,7 +60,7 @@ class TaskController extends AuthController
         // try {
         $id = $request->id;
         $status = $request->status;
-        $token = $request->bearerToken('token');
+        $token = $request->cookie('token');
         $payload = (new GenerateJWT)->decodejwt($token);
 
         $task = Task::findorFail($id);
@@ -160,7 +161,8 @@ class TaskController extends AuthController
             if ($task->save()) {
                 $subject = "New Task Assigned!";
                 $view = "emails.newTaskAssigned";
-                Mail::to([$assignee, $assignor])->send(new Email("", $subject, $view));
+                dispatch(new SendEmail([$assignee, $assignor], $subject, $view));
+                // Mail::to([$assignee, $assignor])->send(new Email("", $subject, $view));
                 return response()->json(['status' => "Task created Successfully", 'task' => $task]);
             }
             return response("some error occured", 500);

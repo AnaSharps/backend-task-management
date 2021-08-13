@@ -11,7 +11,8 @@
         "fruitcake/laravel-cors": "^2.0",
         "google/recaptcha": "^1.2",
         "illuminate/mail": "^8.49",
-        "laravel/lumen-framework": "^8.0"
+        "laravel/lumen-framework": "^8.0",
+        "pusher/pusher-php-server": "^7.0"
     },
     "require-dev": {
         "fakerphp/faker": "^1.9.1",

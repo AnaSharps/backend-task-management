@@ -18,7 +18,7 @@ class AdminController extends AuthController
     {
         //after admin validation through provider
         $this->validate($request, [
-            'email' => 'required|max: 255|regex: ' . $this->emailPattern,
+            'email' => 'required|max:255|regex: ' . $this->emailPattern,
         ]);
 
         $email = $request->email;

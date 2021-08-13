@@ -6,7 +6,7 @@ use App\Events\ExampleEvent;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 
-class ExampleListener
+class ExampleListener implements ShouldQueue
 {
     /**
      * Create the event listener.

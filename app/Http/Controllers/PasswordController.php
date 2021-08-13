@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Helper\GenerateJWT;
+use App\Jobs\SendEmail;
 use App\Models\User;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\Email;
+use App\Events\NotificationsEvent;
 use Exception;
 
 class PasswordController extends AuthController
@@ -30,7 +32,8 @@ class PasswordController extends AuthController
 
         $newjwt = (new GenerateJWT)->genjwt($payload);
         if (User::where('email', $email)->first()) {
-            Mail::to($email)->send(new Email($newjwt, "Reset Password", "emails.resetPass"));
+            event(new NotificationsEvent('Password Reset Email sent!'));
+            dispatch(new SendEmail($email, "Reset Password", "emails.resetPass"));
         }
 
         return response()->json(['status' => 'success', 'message' => 'If this email is registered, a reset password link has been sent to you.', 'token' => $newjwt]);
@@ -46,7 +49,6 @@ class PasswordController extends AuthController
 
         $token = $request->token;
         $payload = (new GenerateJWT)->decodejwt($token);
-        // try {
             if (gettype($payload) === "array") {
                 $email = $payload[0]->sub;
                 $user = User::where('email', $email)->first();
@@ -55,16 +57,16 @@ class PasswordController extends AuthController
                 
                     if ($user->save()) {
                         $email = strtolower($email);
-                        Mail::to($email)->send(new Email("", "Password Changed", "emails.passChanged"));
+
+                        event(new NotificationsEvent('Password Changed!'));
+                        dispatch(new SendEmail($email, "Password Changed", "emails.passChanged"));
                         return response()->json(['status' => 'success', 'message' => 'Successfully changed password!']);
                     }
                 }
             } else {
+                event(new NotificationsEvent('Token Expired', 403));
                 return response("Token Expired", 403);
             }
-        // } catch (Exception $e) {
-        //     return response($e->getMessage(), 500);
-        // }
     }
 
     public function changePassword(Request $request)
@@ -83,7 +85,8 @@ class PasswordController extends AuthController
 
             $user->save();
             $email = strtolower($user->email);
-            Mail::to($email)->send(new Email("", "Password Changed", "emails.passChanged"));
+            event(new NotificationsEvent('Password Changed!'));
+            dispatch(new SendEmail($email, "Password Changed", "emails.passChanged"));
 
             return response()->json(['status' => 'success', 'message' => 'Successfully changed password!']);
         } else {

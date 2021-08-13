@@ -7,6 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 class TodaysTasks extends Model
 {
     protected $fillable = [
-        'inProgress', 'assigned', 'overdue', 'completed', 'total'
+        'inProgress', 'assigned', 'overdue', 'completed', 'total', 'all'
     ];
 }

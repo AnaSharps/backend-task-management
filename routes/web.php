@@ -58,4 +58,6 @@ $router->group(['prefix' => 'api', 'middleware' => 'auth'],  function () use ($r
     $router->get('/myStats', 'DashboardController@myStats');
     $router->get('/todaysTasks', 'DashboardController@tasksForToday');
     $router->get('/myTasks', 'DashboardController@myTasks');
+    $router->post('/taskStats', 'DashboardController@taskStats');
+    $router->post('/todaysStats', 'DashboardController@todaysStats');
 });

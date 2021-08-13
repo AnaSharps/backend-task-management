@@ -4,6 +4,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\NotificationsEvent;
 use App\Mail\Registered;
 use App\Mail\Email;
 use App\Models\User;
@@ -23,18 +24,28 @@ class AuthController extends Controller
     protected $emailPattern;
     protected $taskStatusPattern;
     protected $recaptcha;
+    // protected $token;
+    // protected $user;
 
-    public function __construct()
+    public function __construct(Request $request)
     {
         $this->passPattern = env("PASSWORD_FORMAT");
         $this->emailPattern = env("EMAIL_FORMAT");
         $this->taskStatusPattern = env("TASK_STATUS_FORMAT");
         $this->recaptcha = new \ReCaptcha\ReCaptcha(env('RECAPTCHA_SECRET_KEY'));
+
     }
-
-    public function redirect() {
-
-        return response()->json(['status' => 'success']);
+    
+    public function redirect(Request $request) {
+        $token = $request->cookie("token");
+        $payload = (new GenerateJWT)->decodejwt($token);
+    
+        if (gettype($payload) !== "array") {
+            event(new NotificationsEvent("Token Expied", 403));
+            return response("Expired token", 403);
+        }
+        $user = User::where('email', $payload['sub'])->where('isDeleted', false)->first();
+        return response()->json(['status' => 'success', 'user' => $user]);
     }
 
     public function getUsers(Request $request)

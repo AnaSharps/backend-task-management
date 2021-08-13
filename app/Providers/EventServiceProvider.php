@@ -15,5 +15,14 @@ class EventServiceProvider extends ServiceProvider
         \App\Events\ExampleEvent::class => [
             \App\Listeners\ExampleListener::class,
         ],
+        \App\Events\NotificationsEvent::class => [
+            \App\Listeners\NotificationsListener::class,
+        ],
     ];
+
+    // public function boot()
+    // {
+    //     parent::boot();
+    //     //
+    // }
 }

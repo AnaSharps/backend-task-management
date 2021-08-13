@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\NotificationsEvent;
 use Illuminate\Http\Request;
 use App\Helper\GenerateJWT;
 use App\Helper\RegisterUser;
+use App\Jobs\SendEmail;
 use App\Models\User;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\Email;
@@ -19,9 +21,7 @@ class RegistrationController extends AuthController
         $email = $request->email;
         $email = strtolower($email);
 
-        // try {
         $user = User::where([['email', $email], ['isDeleted', false]])->first();
-        // dd($user->is_deleted);
         if ($user && !($user->isDeleted)) {
             return response('This email has already been registered!', 400);
         } else {
@@ -29,9 +29,6 @@ class RegistrationController extends AuthController
 
             return (new RegisterUser)->register($email, $createdBy);
         }
-        // } catch (\Exception $e) {
-        //     return response($e->getMessage(), 500);
-        // }
     }
 
     public function signup(Request $request)
@@ -74,7 +71,9 @@ class RegistrationController extends AuthController
                         'exp' => $nowTime + (60 * 60 * 24),
                     );
                     $jwt = (new GenerateJWT)->genjwt($payload);
-                    Mail::to($email)->send(new Email("", "Successfully Registered!", "emails.registered"));
+                    // Mail::to($email)->send(new Email("", "Successfully Registered!", "emails.registered"));
+                    dispatch(new SendEmail($email, "Successfully Registered!", "emails.registered"));
+                    event(new NotificationsEvent("Successfully Registered!"));
                     return response()->json(['status' => 'success', 'message' => 'Registered Successfully', 'token' => $jwt]);
                 }
             }

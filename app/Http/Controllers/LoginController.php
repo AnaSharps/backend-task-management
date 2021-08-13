@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\NotificationsEvent;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Helper\GenerateJWT;
@@ -30,14 +31,16 @@ class LoginController extends AuthController
             );
             $jwt = (new GenerateJWT)->genjwt($payload);
 
-            return response()->json(['status' => 'success', 'message' => 'Successfully Logged in!', 'admin' => $user->role === "ADMIN", 'token' => $jwt])->withCookie(new Cookie('token', $jwt));
+            return response()->json(['status' => 'success', 'message' => 'Successfully Logged in!', 'admin' => $user->role === "ADMIN", 'user' => $user,'token' => $jwt])->withCookie(new Cookie('token', $jwt));
         } else {
             return response('Wrong Credentials', 401);
         }
     }
 
-    public function logout(Request $request) {
+    public function logout(Request $request)
+    {
         if ($request->cookie('token')) {
+            // event(new NotificationsEvent('Successfully Logged out!'));
             return response("Successfully loggedOut!")->withCookie(new Cookie('token', null, -1));
         }
     }

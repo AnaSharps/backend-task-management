@@ -10,6 +10,7 @@ use App\Jobs\SendEmail;
 use App\Models\User;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\Email;
+use Symfony\Component\HttpFoundation\Cookie;
 
 class RegistrationController extends AuthController
 {
@@ -46,39 +47,39 @@ class RegistrationController extends AuthController
         $token = $request->token;
         $payload = (new GenerateJWT)->decodejwt($token);
 
-        if (gettype($payload) === "array") {
-            $email = $payload['sub'];
+        if (gettype($payload) !== "array") {
+            event(new NotificationsEvent("Token expired", false));
+            return response("Expired token", 403);
+        }
+        $email = $payload['sub'];
 
-            $currUser = User::where([['email', $email], ['isDeleted', false]])->first();
-            if ($currUser && !($currUser->isDeleted)) {
-                return response('User already exists!', 400);
-            } else {
-                $user = new User();
-                $user->name = strtoupper($request->username);
-                $user->email = strtoupper($email);
-                $user->role = strtoupper('Normal');
-                $user->createdBy = strtoupper($payload['createdBy']);
-                $user->password = app('hash')->make($request->password);
-
-                if ($user->save()) {
-                    $nowTime = time();
-                    $payload = array(
-                        'iss' => $user->name,
-                        'sub' => $user->email,
-                        'createdBy' => $user->createdBy,
-                        'role' => $user->role,
-                        'iat' => $nowTime,
-                        'exp' => $nowTime + (60 * 60 * 24),
-                    );
-                    $jwt = (new GenerateJWT)->genjwt($payload);
-                    // Mail::to($email)->send(new Email("", "Successfully Registered!", "emails.registered"));
-                    dispatch(new SendEmail($email, "Successfully Registered!", "emails.registered"));
-                    event(new NotificationsEvent("Successfully Registered!"));
-                    return response()->json(['status' => 'success', 'message' => 'Registered Successfully', 'token' => $jwt]);
-                }
-            }
+        $currUser = User::where([['email', $email], ['isDeleted', false]])->first();
+        if ($currUser && !($currUser->isDeleted)) {
+            event(new NotificationsEvent("User already exists", false));
+            return response('User already exists!', 400);
         } else {
-            return response()->json(['status' => 'failure', 'message' => 'token expired']);
+            $user = new User();
+            $user->name = strtoupper($request->username);
+            $user->email = strtoupper($email);
+            $user->role = strtoupper('Normal');
+            $user->createdBy = strtoupper($payload['createdBy']);
+            $user->password = app('hash')->make($request->password);
+
+            if ($user->save()) {
+                $nowTime = time();
+                $payload = array(
+                    'iss' => $user->name,
+                    'sub' => $user->email,
+                    'createdBy' => $user->createdBy,
+                    'role' => $user->role,
+                    'iat' => $nowTime,
+                    'exp' => $nowTime + (60 * 60 * 24),
+                );
+                $jwt = (new GenerateJWT)->genjwt($payload);
+                dispatch(new SendEmail($email, "Successfully Registered!", "emails.registered"));
+                event(new NotificationsEvent("Successfully Registered!"));
+                return response()->json(['status' => 'success', 'message' => 'Registered Successfully', 'user' => $$user])->cookie(new Cookie('token', $jwt));
+            }
         }
         // } else {
         //     return $response->getErrorCodes();

@@ -28,7 +28,7 @@ class RegisterUser
         $newjwt = (new GenerateJWT)->genjwt($payload);
         $subject = "Email Verification";
         $view = "emails.verificationEmail";
-        dispatch(new SendEmail($email, $subject, $view));
+        dispatch(new SendEmail($email, $subject, $view, $newjwt));
         event(new NotificationsEvent('Sent Verification Email!'));
         return response()->json(['status' => "success", "message" => "Email Verification link has been sent to your email address. Please Click the link to complete your registration!"]);
     }
